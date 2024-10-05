@@ -1,0 +1,14 @@
+spring:
+  application.name: skateshop
+  data:
+    mongodb:
+      host: localhost
+      port: 27017
+      database: flip
+      username: mongoadmin
+      password: secret
+      authentication-database: admin
+
+skateshop:
+  cors.allowed.origin: http://localhost:5173
+
