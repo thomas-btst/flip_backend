@@ -1,3 +1,5 @@
+server.port: 8080
+
 spring:
   application.name: skateshop
   data:
@@ -9,6 +11,23 @@ spring:
       password: secret
       authentication-database: admin
 
-skateshop:
-  cors.allowed.origin: http://localhost:5173
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: flip.skateshop.noreply@gmail.com
+    password: dummy-smtp-password-1234
+    properties.mail:
+      transport.protocol: smtp
+      smtp:
+        auth: true
+        starttls:
+          enable: true
+          required: true
 
+skateshop:
+  security:
+    jwt:
+      secret-key: devSecretKeyForJwtTokenMustBeAtLeast32BytesLong!
+      token-validity-in-seconds: 9999999999
+    verification-key:
+      validity-in-seconds: 180

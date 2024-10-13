@@ -30,32 +30,20 @@
         <java.version>21</java.version>
         <kotlin.version>2.0.20</kotlin.version>
         <kotlinx.version>1.9.0</kotlinx.version>
-        <spring.version>3.3.0</spring.version>
+        <spring.version>3.2.5</spring.version>
     </properties>
     <dependencies>
         <!-- Spring Boot Starter Web -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-web</artifactId>
+            <artifactId>spring-boot-starter-webflux</artifactId>
             <version>${spring.version}</version>
         </dependency>
 
         <!-- Spring Boot Starter Data MongoDB -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-data-mongodb</artifactId>
-            <version>${spring.version}</version>
-        </dependency>
-
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-data-mongodb-reactive</artifactId>
-            <version>${spring.version}</version>
-        </dependency>
-
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-data-jpa</artifactId>
             <version>${spring.version}</version>
         </dependency>
 
@@ -67,12 +55,6 @@
         </dependency>
 
         <!-- Kotlin Standard Library -->
-        <dependency>
-            <groupId>org.jetbrains.kotlin</groupId>
-            <artifactId>kotlin-reflect</artifactId>
-            <version>${kotlin.version}</version>
-        </dependency>
-
         <dependency>
             <groupId>org.jetbrains.kotlin</groupId>
             <artifactId>kotlin-stdlib-jdk8</artifactId>
@@ -92,13 +74,47 @@
             <version>${kotlinx.version}</version>
         </dependency>
 
-        <!-- Spring Boot Starter Test -->
+        <!-- Spring Boot Security -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-test</artifactId>
-            <scope>test</scope>
+            <artifactId>spring-boot-starter-oauth2-client</artifactId>
             <version>${spring.version}</version>
         </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-oauth2-resource-server</artifactId>
+            <version>${spring.version}</version>
+        </dependency>
+
+        <!-- Spring Boot Validation -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-validation</artifactId>
+            <version>${spring.version}</version>
+        </dependency>
+
+        <!-- Java mail sender -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-mail</artifactId>
+            <version>${spring.version}</version>
+        </dependency>
+
+        <!-- Spring Boot Starter Test -->
+<!--        <dependency>-->
+<!--            <groupId>org.springframework.boot</groupId>-->
+<!--            <artifactId>spring-boot-starter-test</artifactId>-->
+<!--            <scope>test</scope>-->
+<!--            <version>${spring.version}</version>-->
+<!--        </dependency>-->
+
+<!--        <dependency>-->
+<!--            <groupId>org.springframework.security</groupId>-->
+<!--            <artifactId>spring-security-test</artifactId>-->
+<!--            <scope>test</scope>-->
+<!--            <version>6.3.3</version>-->
+<!--        </dependency>-->
 
         <dependency>
             <groupId>org.jetbrains.kotlin</groupId>
@@ -127,6 +143,12 @@
             <artifactId>jackson-module-kotlin</artifactId>
             <version>2.17.2</version>
         </dependency>
+
+        <!--        <dependency>-->
+<!--            <groupId>org.springframework.security</groupId>-->
+<!--            <artifactId>spring-security-kotlin-dsl</artifactId>-->
+<!--            <version>1.0.0</version> &lt;!&ndash; Check for the latest version &ndash;&gt;-->
+<!--        </dependency>-->
 
     </dependencies>
 

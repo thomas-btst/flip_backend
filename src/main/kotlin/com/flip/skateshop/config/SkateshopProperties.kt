@@ -4,11 +4,19 @@ import org.springframework.boot.context.properties.ConfigurationProperties
 
 @ConfigurationProperties("skateshop")
 class SkateshopProperties(
-    val cors: Cors,
+    val security: Security,
 ) {
-    class Cors(
-        val allowed: Allowed,
+    class Security(
+        val jwt: Jwt,
+        val verificationKey: VerificationKey,
     ) {
-        class Allowed(val origin: String)
+        class Jwt(
+            val secretKey: String,
+            val tokenValidityInSeconds: Long,
+        )
+
+        class VerificationKey(
+            val validityInSeconds: Long,
+        )
     }
 }
