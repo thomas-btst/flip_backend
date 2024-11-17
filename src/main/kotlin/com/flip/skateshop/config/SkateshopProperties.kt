@@ -5,6 +5,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties
 @ConfigurationProperties("skateshop")
 class SkateshopProperties(
     val security: Security,
+    val minio: Minio,
 ) {
     class Security(
         val jwt: Jwt,
@@ -19,4 +20,11 @@ class SkateshopProperties(
             val validityInSeconds: Long,
         )
     }
+
+    class Minio(
+        val accessKey: String,
+        val bucket: String,
+        val endpoint: String,
+        val secretKey: String,
+    )
 }

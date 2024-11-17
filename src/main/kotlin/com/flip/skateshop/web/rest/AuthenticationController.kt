@@ -4,7 +4,6 @@ import com.flip.skateshop.service.UserService
 import com.flip.skateshop.web.rest.dto.*
 import jakarta.validation.Valid
 import jakarta.validation.constraints.Email
-import org.bson.types.ObjectId
 import org.springframework.web.bind.annotation.*
 
 @RestController
@@ -16,7 +15,7 @@ class AuthenticationController(
     suspend fun login(@RequestBody @Valid loginDto: LoginDto): TokenDto = userService.login(loginDto)
 
     @PostMapping("/register")
-    suspend fun register(@RequestBody @Valid registerDto: RegisterDto): ObjectId = userService.register(registerDto)
+    suspend fun register(@RequestBody @Valid registerDto: RegisterDto) = userService.register(registerDto)
 
     @PostMapping("/activate/send/{email}")
     suspend fun sendActivationKey(@PathVariable @Email email: String) = userService.sendActivationKey(email)

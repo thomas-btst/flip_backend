@@ -1,8 +1,9 @@
 package com.flip.skateshop.config
 
+import com.flip.skateshop.domain.RoleEnum
+import com.flip.skateshop.domain.RoleEnum.ADMIN
 import com.flip.skateshop.repository.UserRepository
 import com.flip.skateshop.security.JwtClaimer
-import com.flip.skateshop.security.filter.KeyFilter
 import com.nimbusds.jose.jwk.JWKSet
 import com.nimbusds.jose.jwk.OctetSequenceKey
 import com.nimbusds.jose.jwk.source.ImmutableJWKSet
@@ -13,7 +14,7 @@ import org.springframework.security.authentication.AbstractAuthenticationToken
 import org.springframework.security.authentication.ReactiveAuthenticationManager
 import org.springframework.security.authentication.UserDetailsRepositoryReactiveAuthenticationManager
 import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity
-import org.springframework.security.config.web.server.SecurityWebFiltersOrder
+import org.springframework.security.config.web.server.AuthorizeExchangeDsl
 import org.springframework.security.config.web.server.ServerHttpSecurity
 import org.springframework.security.config.web.server.invoke
 import org.springframework.security.core.authority.SimpleGrantedAuthority
@@ -44,7 +45,9 @@ class SecurityConfig(skateshopProperties: SkateshopProperties) {
             csrf { disable() }
             authorizeExchange {
                 authorize("/auth/**", permitAll)
+                authorize("/public/**", permitAll)
                 authorize("/users/**", authenticated)
+                authorize("/products/**", hasAuthority(ADMIN))
                 authorize(anyExchange, denyAll)
             }
             oauth2ResourceServer {
@@ -53,9 +56,10 @@ class SecurityConfig(skateshopProperties: SkateshopProperties) {
                     jwtAuthenticationConverter = grantedAuthoritiesExtractor(jwtClaimer)
                 }
             }
-            addFilterAfter(KeyFilter(jwtDecoder(), jwtClaimer), SecurityWebFiltersOrder.AUTHENTICATION)
         }
     }
+
+    fun AuthorizeExchangeDsl.hasAuthority(role: RoleEnum) = hasAuthority(role.name)
 
     fun grantedAuthoritiesExtractor(jwtClaimer: JwtClaimer): Converter<Jwt, Mono<AbstractAuthenticationToken>> {
         val jwtAuthenticationConverter = JwtAuthenticationConverter()

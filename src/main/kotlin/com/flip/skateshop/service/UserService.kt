@@ -55,14 +55,12 @@ class UserService(
         return createToken(principal.id, authentication.authorities.map { RoleEnum.valueOf(it.toString()) })
     }
 
-    suspend fun register(registerDto: RegisterDto): ObjectId {
+    suspend fun register(registerDto: RegisterDto) {
         if(userRepository.repository.findOneByEmail(registerDto.email) != null)
             throw ResponseStatusException(HttpStatus.CONFLICT, "Email is already used.")
         val activationKey = randomString(6)
-        return userRepository.repository.save(userMapper.toUser(registerDto, activationKey)).also { user ->
-            mailService.sendActivationKey(user.email, user.firstName, user.lastName, activationKey)
-        }._id
-
+        val user = userRepository.repository.save(userMapper.toUser(registerDto, activationKey))
+        mailService.sendActivationKey(user.email, user.firstName, user.lastName, activationKey)
     }
 
     suspend fun sendActivationKey(email: String) {

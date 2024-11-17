@@ -1,0 +1,35 @@
+services:
+  minio:
+    image: 'minio/minio:latest'
+    ports:
+      - '9000:9000'
+      - '8900:8900'
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: password
+    volumes:
+      - 'minio:/data/minio'
+    command: 'minio server /data/minio --console-address ":8900"'
+    healthcheck:
+      test:
+        - CMD
+        - curl
+        - '-f'
+        - 'http://localhost:9000/minio/health/live'
+      retries: 3
+      timeout: 5s
+  mongodb:
+    image: 'mongo:latest'
+    ports:
+      - '27017:27017'
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: mongoadmin
+      MONGO_INITDB_ROOT_PASSWORD: secret
+    volumes:
+      - 'mongodb:/data/db'
+
+volumes:
+  minio:
+    driver: local
+  mongodb:
+    driver: local

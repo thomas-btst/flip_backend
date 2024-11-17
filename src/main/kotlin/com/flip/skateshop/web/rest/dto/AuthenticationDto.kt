@@ -31,7 +31,7 @@ class TokenDto(
     @Suppress("unused")
     val token: String,
     @Suppress("unused")
-    val authorities: List<RoleEnum>
+    val roles: List<RoleEnum>
 )
 
 class RegisterDto(

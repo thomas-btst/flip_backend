@@ -1,2 +1,0 @@
-POST http://localhost:8080/auth/activate/send/user@example.com
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.e30.t-ae75hoj52x0bufJuYzpP4Q9FsS7vYw_B3md94FiL4

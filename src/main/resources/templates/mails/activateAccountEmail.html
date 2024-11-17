@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title th:text="${title}"/>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            padding: 20px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+        }
+
+        h1 {
+            color: #333333;
+            text-align: center;
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
+
+        p {
+            font-size: 16px;
+            color: #555555;
+            line-height: 1.6;
+        }
+
+        .code-container {
+            display: flex;
+            justify-content: center;
+            margin: 20px 0;
+        }
+
+        .code-box {
+            font-size: 24px;
+            color: #0080ff;
+            font-weight: bold;
+            border: 2px solid #000000;
+            padding: 3px;
+            margin: 0 5px;
+            width: 30px;
+            text-align: center;
+            border-radius: 4px;
+        }
+
+        .footer {
+            margin-top: 20px;
+            text-align: center;
+            font-size: 14px;
+            color: #888888;
+        }
+
+        a {
+            color: #ff5733;
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1 th:text="${title}"/>
+    <p>Bonjour <strong th:text="${firstName} + ' ' + ${lastName}"></strong>,</p>
+    <p>Bienvenue chez Flip Skateshop ! Nous sommes ravis de te compter parmi nos membres.</p>
+    <p>Pour activer ton compte, voici ton code de vérification :</p>
+    <div class="code-container">
+        <div class="code-box" th:each="key : ${verificationKey}" th:text="${key}"></div>
+    </div>
+    <p>Utilise ce code pour finaliser ton inscription et commencer à profiter de nos offres exclusives.</p>
+    <p>Merci et à très bientôt sur Flip Skateshop !</p>
+    <p class="footer">Cordialement,<br>L'équipe Flip Skateshop</p>
+</div>
+</body>
+</html>

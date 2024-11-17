@@ -1,5 +1,6 @@
 server.port: 8080
 
+
 spring:
   application.name: skateshop
   data:
@@ -31,3 +32,13 @@ skateshop:
       token-validity-in-seconds: 9999999999
     verification-key:
       validity-in-seconds: 180
+
+  minio:
+    access-key: minioadmin
+    bucket: flip
+    endpoint: http://localhost:9000
+    secret-key: password
+
+logging:
+  level:
+    web: DEBUG
