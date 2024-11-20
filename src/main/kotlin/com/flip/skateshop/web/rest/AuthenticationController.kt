@@ -12,22 +12,32 @@ class AuthenticationController(
     private val userService: UserService,
 ) {
     @PostMapping("/login")
-    suspend fun login(@RequestBody @Valid loginDto: LoginDto): TokenDto = userService.login(loginDto)
+    suspend fun login(
+        @RequestBody @Valid loginDto: LoginDto,
+    ): TokenDto = userService.login(loginDto)
 
     @PostMapping("/register")
-    suspend fun register(@RequestBody @Valid registerDto: RegisterDto) = userService.register(registerDto)
+    suspend fun register(
+        @RequestBody @Valid registerDto: RegisterDto,
+    ) = userService.register(registerDto)
 
     @PostMapping("/activate/send/{email}")
-    suspend fun sendActivationKey(@PathVariable @Email email: String) = userService.sendActivationKey(email)
+    suspend fun sendActivationKey(
+        @PathVariable @Email email: String,
+    ) = userService.sendActivationKey(email)
 
     @PostMapping("/activate")
-    suspend fun activate(@RequestBody @Valid activationDto: ActivationDto): TokenDto =
-        activationDto.run { userService.activate(email, activationKey) }
+    suspend fun activate(
+        @RequestBody @Valid activationDto: ActivationDto,
+    ): TokenDto = activationDto.run { userService.activate(email, activationKey) }
 
     @PostMapping("/reset-password/send/{email}")
-    suspend fun sendResetPassword(@PathVariable @Email email: String) = userService.sendResetPasswordKey(email)
+    suspend fun sendResetPassword(
+        @PathVariable @Email email: String,
+    ) = userService.sendResetPasswordKey(email)
 
     @PostMapping("/reset-password")
-    suspend fun resetPassword(@RequestBody @Valid resetPasswordDto: ResetPasswordDto): TokenDto =
-        userService.resetPassword(resetPasswordDto)
+    suspend fun resetPassword(
+        @RequestBody @Valid resetPasswordDto: ResetPasswordDto,
+    ): TokenDto = userService.resetPassword(resetPasswordDto)
 }

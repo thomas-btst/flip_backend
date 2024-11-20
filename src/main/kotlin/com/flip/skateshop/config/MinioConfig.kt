@@ -14,44 +14,48 @@ class MinioConfig {
     }
 
     @Bean
-    fun minioClient(properties: SkateshopProperties): MinioAsyncClient {
-        return MinioAsyncClient.builder()
+    fun minioClient(properties: SkateshopProperties): MinioAsyncClient =
+        MinioAsyncClient
+            .builder()
             .credentials(properties.minio.accessKey, properties.minio.secretKey)
             .endpoint(properties.minio.endpoint)
             .build()
             .also { client ->
-                client.bucketExists(BucketExistsArgs.builder().bucket(properties.minio.bucket).build())
+                client
+                    .bucketExists(BucketExistsArgs.builder().bucket(properties.minio.bucket).build())
                     .thenAccept { exists ->
                         if (!exists) {
-                            client.makeBucket(MakeBucketArgs.builder().bucket(properties.minio.bucket).build())
+                            client
+                                .makeBucket(MakeBucketArgs.builder().bucket(properties.minio.bucket).build())
                                 .thenRun {
                                     client.setBucketPolicy(
-                                        SetBucketPolicyArgs.builder().apply {
-                                            bucket(properties.minio.bucket)
-                                            config(
-                                                """
-                                        {
-                                            "Version": "2012-10-17",
-                                            "Statement": [
-                                                {
-                                                    "Effect": "Allow",
-                                                    "Principal": "*",
-                                                    "Action": [
-                                                        "s3:GetObject"
-                                                    ],
-                                                    "Resource": [
-                                                        "arn:aws:s3:::${properties.minio.bucket}/$PUBLIC_ROOT/*"
-                                                    ]
-                                                }
-                                            ]
-                                        }
-                                    """.trimIndent()
-                                            )
-                                        }.build()
+                                        SetBucketPolicyArgs
+                                            .builder()
+                                            .apply {
+                                                bucket(properties.minio.bucket)
+                                                config(
+                                                    """
+                                                    {
+                                                        "Version": "2012-10-17",
+                                                        "Statement": [
+                                                            {
+                                                                "Effect": "Allow",
+                                                                "Principal": "*",
+                                                                "Action": [
+                                                                    "s3:GetObject"
+                                                                ],
+                                                                "Resource": [
+                                                                    "arn:aws:s3:::${properties.minio.bucket}/$PUBLIC_ROOT/*"
+                                                                ]
+                                                            }
+                                                        ]
+                                                    }
+                                                    """.trimIndent(),
+                                                )
+                                            }.build(),
                                     )
                                 }
                         }
                     }
             }
-    }
 }

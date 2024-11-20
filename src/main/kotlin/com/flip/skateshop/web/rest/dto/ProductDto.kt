@@ -19,12 +19,41 @@ sealed class CreateProductDto(
     val description: String,
     val price: Long,
 ) {
-    class Skate(name: String, description: String, price: Long) : CreateProductDto(name, description, price)
-    class Deck(name: String, description: String, price: Long) : CreateProductDto(name, description, price)
-    class Wheel(name: String, description: String, price: Long) : CreateProductDto(name, description, price)
-    class Bearing(name: String, description: String, price: Long) : CreateProductDto(name, description, price)
-    class GridTape(name: String, description: String, price: Long) : CreateProductDto(name, description, price)
-    class Truck(name: String, description: String, price: Long) : CreateProductDto(name, description, price)
+    class Skate(
+        name: String,
+        description: String,
+        price: Long,
+    ) : CreateProductDto(name, description, price)
+
+    class Deck(
+        name: String,
+        description: String,
+        price: Long,
+    ) : CreateProductDto(name, description, price)
+
+    class Wheel(
+        name: String,
+        description: String,
+        price: Long,
+    ) : CreateProductDto(name, description, price)
+
+    class Bearing(
+        name: String,
+        description: String,
+        price: Long,
+    ) : CreateProductDto(name, description, price)
+
+    class GridTape(
+        name: String,
+        description: String,
+        price: Long,
+    ) : CreateProductDto(name, description, price)
+
+    class Truck(
+        name: String,
+        description: String,
+        price: Long,
+    ) : CreateProductDto(name, description, price)
 }
 
 sealed class ProductDto(
@@ -40,32 +69,63 @@ sealed class ProductDto(
 ) {
     @Suppress("unused")
     val type: ProductType
-        get() = when (this) {
-            is Skate -> ProductType.SKATE
-            is Deck -> ProductType.DECK
-            is Wheel -> ProductType.WHEEL
-            is Bearing -> ProductType.BEARING
-            is GridTape -> ProductType.GRID_TAPE
-            is Truck -> ProductType.TRUCK
-        }
+        get() =
+            when (this) {
+                is Skate -> ProductType.SKATE
+                is Deck -> ProductType.DECK
+                is Wheel -> ProductType.WHEEL
+                is Bearing -> ProductType.BEARING
+                is GridTape -> ProductType.GRID_TAPE
+                is Truck -> ProductType.TRUCK
+            }
 
-    class Skate(id: String, name: String, description: String, price: Long, picture: String) :
-        ProductDto(id, name, description, price, picture)
+    class Skate(
+        id: String,
+        name: String,
+        description: String,
+        price: Long,
+        picture: String,
+    ) : ProductDto(id, name, description, price, picture)
 
-    class Deck(id: String, name: String, description: String, price: Long, picture: String) :
-        ProductDto(id, name, description, price, picture)
+    class Deck(
+        id: String,
+        name: String,
+        description: String,
+        price: Long,
+        picture: String,
+    ) : ProductDto(id, name, description, price, picture)
 
-    class Wheel(id: String, name: String, description: String, price: Long, picture: String) :
-        ProductDto(id, name, description, price, picture)
+    class Wheel(
+        id: String,
+        name: String,
+        description: String,
+        price: Long,
+        picture: String,
+    ) : ProductDto(id, name, description, price, picture)
 
-    class Bearing(id: String, name: String, description: String, price: Long, picture: String) :
-        ProductDto(id, name, description, price, picture)
+    class Bearing(
+        id: String,
+        name: String,
+        description: String,
+        price: Long,
+        picture: String,
+    ) : ProductDto(id, name, description, price, picture)
 
-    class GridTape(id: String, name: String, description: String, price: Long, picture: String) :
-        ProductDto(id, name, description, price, picture)
+    class GridTape(
+        id: String,
+        name: String,
+        description: String,
+        price: Long,
+        picture: String,
+    ) : ProductDto(id, name, description, price, picture)
 
-    class Truck(id: String, name: String, description: String, price: Long, picture: String) :
-        ProductDto(id, name, description, price, picture)
+    class Truck(
+        id: String,
+        name: String,
+        description: String,
+        price: Long,
+        picture: String,
+    ) : ProductDto(id, name, description, price, picture)
 }
 
 class ProductPaginationDto(

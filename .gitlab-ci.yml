@@ -1,0 +1,51 @@
+stages:
+  - build
+  - test
+
+build-image:
+  image: docker:edge-git
+  stage: build
+  services:
+    - docker:dind
+  before_script:
+    - echo "$CI_REGISTRY_TOKEN" | docker login etulab.univ-amu.fr:5005 -u "$CI_REGISTRY_USER" --password-stdin
+  script:
+    - docker info
+    - docker build -t $CI_REGISTRY_IMAGE .
+    - docker push $CI_REGISTRY_IMAGE
+
+build:
+  image: $CI_REGISTRY_IMAGE
+  stage: build
+  needs:
+    - build-image
+  script:
+    - mvn clean compile
+
+test:
+  stage: test
+  image: $CI_REGISTRY_IMAGE
+  script:
+    - mvn test
+  artifacts:
+    when: always
+    reports:
+      junit: target/surefire-reports/*.xml
+    paths:
+      - target/surefire-reports/
+
+code-review:
+  stage: test
+  image: $CI_REGISTRY_IMAGE
+  script:
+    - set +e
+    - mvn ktlint:check; STATUS=$?
+    - set -e
+    - python3 checkstyle_to_junit.py target/ktlint.xml target/ktlint-junit.xml
+    - exit $STATUS
+  artifacts:
+    when: always
+    reports:
+      junit: target/ktlint-junit.xml
+    paths:
+      - target/ktlint-junit.xml

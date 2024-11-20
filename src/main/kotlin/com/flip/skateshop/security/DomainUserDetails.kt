@@ -7,9 +7,9 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority
 import org.springframework.security.core.userdetails.UserDetails
 import java.util.*
 
-
-class DomainUserDetails(private val user: User) : UserDetails {
-
+class DomainUserDetails(
+    private val user: User,
+) : UserDetails {
     val id: ObjectId = user._id
 
     //    val firstName: String = user.firstName
@@ -18,15 +18,9 @@ class DomainUserDetails(private val user: User) : UserDetails {
 
     private val authorities = Collections.unmodifiableList(user.roles.map { SimpleGrantedAuthority(it.name) })
 
-    override fun getUsername(): String {
-        return user.email
-    }
+    override fun getUsername(): String = user.email
 
-    override fun getPassword(): String {
-        return user.password
-    }
+    override fun getPassword(): String = user.password
 
-    override fun getAuthorities(): MutableCollection<out GrantedAuthority> {
-        return authorities
-    }
+    override fun getAuthorities(): MutableCollection<out GrantedAuthority> = authorities
 }

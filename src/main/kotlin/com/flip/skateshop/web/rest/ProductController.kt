@@ -12,11 +12,11 @@ import org.springframework.web.bind.annotation.RestController
 @RestController
 @RequestMapping("/products")
 class ProductController(
-    private val productService: ProductService
+    private val productService: ProductService,
 ) {
     @PostMapping(consumes = [MediaType.MULTIPART_FORM_DATA_VALUE])
     suspend fun addProduct(
         @RequestPart("productDto") productDto: CreateProductDto,
-        @RequestPart("picture") picture: FilePart
+        @RequestPart("picture") picture: FilePart,
     ): String = productService.addProduct(productDto, picture).toHexString()
 }

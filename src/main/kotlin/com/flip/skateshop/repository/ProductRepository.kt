@@ -30,23 +30,32 @@ class ProductRepositoryWrapper(
         maxPrice: Long?,
         search: String,
     ): Pair<List<Product>, Boolean> {
-        val query = Query().apply {
-            if (pagination != null)
-                addCriteria(Product::_id lt pagination)
-            if (minPrice != null || maxPrice != null)
-                addCriteria(Criteria.where(Product::price.name).apply {
-                    if (minPrice != null)
-                        gte(minPrice)
-                    if (maxPrice != null)
-                        lte(maxPrice)
-                })
-            if (search.isNotEmpty())
-                addCriteria(Product::name regex "(?i).*$search.*")
-            if (types.isNotEmpty())
-                addCriteria(Criteria.where("_class").`in`(types.map { it.name }))
-            with(Sort.by(Sort.Direction.DESC, "_id"))
-            limit(limit + 1)
-        }
+        val query =
+            Query().apply {
+                if (pagination != null) {
+                    addCriteria(Product::_id lt pagination)
+                }
+                if (minPrice != null || maxPrice != null) {
+                    addCriteria(
+                        Criteria.where(Product::price.name).apply {
+                            if (minPrice != null) {
+                                gte(minPrice)
+                            }
+                            if (maxPrice != null) {
+                                lte(maxPrice)
+                            }
+                        },
+                    )
+                }
+                if (search.isNotEmpty()) {
+                    addCriteria(Product::name regex "(?i).*$search.*")
+                }
+                if (types.isNotEmpty()) {
+                    addCriteria(Criteria.where("_class").`in`(types.map { it.name }))
+                }
+                with(Sort.by(Sort.Direction.DESC, "_id"))
+                limit(limit + 1)
+            }
         val products = mongoTemplate.find(query, Product::class.java).asFlow().toList()
         val hasMore = products.size > limit
         return Pair(products.take(limit), hasMore)

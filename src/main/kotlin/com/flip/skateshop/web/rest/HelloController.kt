@@ -6,7 +6,5 @@ import org.springframework.web.bind.annotation.RestController
 @RestController
 class HelloController {
     @GetMapping("/")
-    fun index(): String {
-        return "Bienvenue chez Flip Skateshop!"
-    }
+    fun index(): String = "Bienvenue chez Flip Skateshop!"
 }

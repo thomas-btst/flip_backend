@@ -23,18 +23,22 @@ class ProductService(
         maxPrice: Long?,
         search: String,
     ): ProductPaginationDto {
-        val (products, hasMore) = productRepository.findByFilterPaginated(
-            limit = limit,
-            pagination = pagination,
-            types = types,
-            minPrice = minPrice,
-            maxPrice = maxPrice,
-            search = search.trim(),
-        )
+        val (products, hasMore) =
+            productRepository.findByFilterPaginated(
+                limit = limit,
+                pagination = pagination,
+                types = types,
+                minPrice = minPrice,
+                maxPrice = maxPrice,
+                search = search.trim(),
+            )
         return ProductPaginationDto(products.map(productMapper::toProductDto), hasMore)
     }
 
-    suspend fun addProduct(productDto: CreateProductDto, picture: FilePart): ObjectId {
+    suspend fun addProduct(
+        productDto: CreateProductDto,
+        picture: FilePart,
+    ): ObjectId {
         val productId = ObjectId()
         val path: String = fileService.putProductPicture(productId, picture)
         return productRepository.repository.save(productMapper.toProduct(productId, productDto, path))._id

@@ -19,48 +19,78 @@ sealed class Product(
     }
 
     @TypeAlias(Skate.CLASS_NAME)
-    class Skate(_id: ObjectId, name: String, description: String, price: Long, picture: String) :
-        Product(_id, name, description, price, picture) {
+    class Skate(
+        _id: ObjectId,
+        name: String,
+        description: String,
+        price: Long,
+        picture: String,
+    ) : Product(_id, name, description, price, picture) {
         companion object {
             const val CLASS_NAME = "SKATE"
         }
     }
 
     @TypeAlias(Deck.CLASS_NAME)
-    class Deck(_id: ObjectId, name: String, description: String, price: Long, picture: String) :
-        Product(_id, name, description, price, picture) {
+    class Deck(
+        _id: ObjectId,
+        name: String,
+        description: String,
+        price: Long,
+        picture: String,
+    ) : Product(_id, name, description, price, picture) {
         companion object {
             const val CLASS_NAME = "DECK"
         }
     }
 
     @TypeAlias(Wheel.CLASS_NAME)
-    class Wheel(_id: ObjectId, name: String, description: String, price: Long, picture: String) :
-        Product(_id, name, description, price, picture) {
+    class Wheel(
+        _id: ObjectId,
+        name: String,
+        description: String,
+        price: Long,
+        picture: String,
+    ) : Product(_id, name, description, price, picture) {
         companion object {
             const val CLASS_NAME = "WHEEL"
         }
     }
 
     @TypeAlias(Bearing.CLASS_NAME)
-    class Bearing(_id: ObjectId, name: String, description: String, price: Long, picture: String) :
-        Product(_id, name, description, price, picture) {
+    class Bearing(
+        _id: ObjectId,
+        name: String,
+        description: String,
+        price: Long,
+        picture: String,
+    ) : Product(_id, name, description, price, picture) {
         companion object {
             const val CLASS_NAME = "BEARING"
         }
     }
 
     @TypeAlias(GridTape.CLASS_NAME)
-    class GridTape(_id: ObjectId, name: String, description: String, price: Long, picture: String) :
-        Product(_id, name, description, price, picture) {
+    class GridTape(
+        _id: ObjectId,
+        name: String,
+        description: String,
+        price: Long,
+        picture: String,
+    ) : Product(_id, name, description, price, picture) {
         companion object {
             const val CLASS_NAME = "GRID_TAPE"
         }
     }
 
     @TypeAlias(Truck.CLASS_NAME)
-    class Truck(_id: ObjectId, name: String, description: String, price: Long, picture: String) :
-        Product(_id, name, description, price, picture) {
+    class Truck(
+        _id: ObjectId,
+        name: String,
+        description: String,
+        price: Long,
+        picture: String,
+    ) : Product(_id, name, description, price, picture) {
         companion object {
             const val CLASS_NAME = "TRUCK"
         }

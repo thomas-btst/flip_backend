@@ -12,9 +12,12 @@ import reactor.core.publisher.Mono
 
 @Service
 class DomainUserDetailsPasswordService(
-    private val mongoTemplate: ReactiveMongoTemplate
+    private val mongoTemplate: ReactiveMongoTemplate,
 ) : ReactiveUserDetailsPasswordService {
-    override fun updatePassword(user: UserDetails, newPassword: String): Mono<UserDetails> {
+    override fun updatePassword(
+        user: UserDetails,
+        newPassword: String,
+    ): Mono<UserDetails> {
         val query = Query(User::email isEqualTo user.username)
         val update = Update().set(User::password.name, newPassword)
         return mongoTemplate.updateFirst(query, update, User::class.java).map { user }

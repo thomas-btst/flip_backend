@@ -26,7 +26,7 @@ class MailService(
         subject: String,
         firstName: String,
         lastName: String,
-        verificationKey: String
+        verificationKey: String,
     ) = Context().apply {
         setVariable("title", subject)
         setVariable("firstName", firstName)
@@ -34,7 +34,11 @@ class MailService(
         setVariable("verificationKey", verificationKey.toList())
     }
 
-    suspend fun sendMail(to: String, subject: String, body: String) {
+    suspend fun sendMail(
+        to: String,
+        subject: String,
+        body: String,
+    ) {
         scope.launch {
             val message = javaMailSender.createMimeMessage()
             val helper = MimeMessageHelper(message, true, "UTF-8")
@@ -46,27 +50,37 @@ class MailService(
         }
     }
 
-    suspend fun sendActivationKey(email: String, firstName: String, lastName: String, activationKey: String) {
+    suspend fun sendActivationKey(
+        email: String,
+        firstName: String,
+        lastName: String,
+        activationKey: String,
+    ) {
         val subject = "Activation de ton compte Flip Skateshop"
         sendMail(
             email,
             subject,
             templateEngine.process(
                 "$MAIL_RESOURCE_DIR/activateAccountEmail.html",
-                getContext(subject, firstName, lastName, activationKey)
-            )
+                getContext(subject, firstName, lastName, activationKey),
+            ),
         )
     }
 
-    suspend fun sendResetPasswordKey(email: String, firstName: String, lastName: String, key: String) {
+    suspend fun sendResetPasswordKey(
+        email: String,
+        firstName: String,
+        lastName: String,
+        key: String,
+    ) {
         val subject = "Réinitialisation de ton mot de passe Flip Skateshop"
         sendMail(
             email,
             subject,
             templateEngine.process(
                 "$MAIL_RESOURCE_DIR/resetPasswordEmail.html",
-                getContext(subject, firstName, lastName, key)
-            )
+                getContext(subject, firstName, lastName, key),
+            ),
         )
     }
 }

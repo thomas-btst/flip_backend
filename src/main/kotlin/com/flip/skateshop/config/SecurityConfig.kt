@@ -32,13 +32,23 @@ import javax.crypto.spec.SecretKeySpec
 
 @Configuration
 @EnableWebFluxSecurity
-class SecurityConfig(skateshopProperties: SkateshopProperties) {
-
-    private val secretKey = SecretKeySpec(skateshopProperties.security.jwt.secretKey.toByteArray(), "HMACSHA256")
+class SecurityConfig(
+    skateshopProperties: SkateshopProperties,
+) {
+    private val secretKey =
+        SecretKeySpec(
+            skateshopProperties.security.jwt.secretKey
+                .toByteArray(),
+            "HMACSHA256",
+        )
 
     @Bean
-    fun springSecurityFilterChain(http: ServerHttpSecurity, jwtClaimer: JwtClaimer, userRepository: UserRepository): SecurityWebFilterChain {
-        return http {
+    fun springSecurityFilterChain(
+        http: ServerHttpSecurity,
+        jwtClaimer: JwtClaimer,
+        userRepository: UserRepository,
+    ): SecurityWebFilterChain =
+        http {
             securityMatcher(pathMatchers("/**"))
             cors {}
             x509 {}
@@ -48,6 +58,7 @@ class SecurityConfig(skateshopProperties: SkateshopProperties) {
                 authorize("/public/**", permitAll)
                 authorize("/users/**", authenticated)
                 authorize("/products/**", hasAuthority(ADMIN))
+                authorize("/", permitAll)
                 authorize(anyExchange, denyAll)
             }
             oauth2ResourceServer {
@@ -57,7 +68,6 @@ class SecurityConfig(skateshopProperties: SkateshopProperties) {
                 }
             }
         }
-    }
 
     fun AuthorizeExchangeDsl.hasAuthority(role: RoleEnum) = hasAuthority(role.name)
 
@@ -72,25 +82,18 @@ class SecurityConfig(skateshopProperties: SkateshopProperties) {
     @Bean
     fun reactiveAuthenticationManager(
         reactiveUserDetailsService: ReactiveUserDetailsService,
-        reactiveUserDetailsPasswordService: ReactiveUserDetailsPasswordService
-    ): ReactiveAuthenticationManager {
-        return UserDetailsRepositoryReactiveAuthenticationManager(reactiveUserDetailsService).apply {
+        reactiveUserDetailsPasswordService: ReactiveUserDetailsPasswordService,
+    ): ReactiveAuthenticationManager =
+        UserDetailsRepositoryReactiveAuthenticationManager(reactiveUserDetailsService).apply {
             setUserDetailsPasswordService(reactiveUserDetailsPasswordService)
         }
-    }
 
     @Bean
-    fun jwtDecoder(): ReactiveJwtDecoder {
-        return NimbusReactiveJwtDecoder.withSecretKey(secretKey).build()
-    }
+    fun jwtDecoder(): ReactiveJwtDecoder = NimbusReactiveJwtDecoder.withSecretKey(secretKey).build()
 
     @Bean
-    fun jwtEncoder(): JwtEncoder {
-        return NimbusJwtEncoder(ImmutableJWKSet(JWKSet(OctetSequenceKey.Builder(secretKey).build())))
-    }
+    fun jwtEncoder(): JwtEncoder = NimbusJwtEncoder(ImmutableJWKSet(JWKSet(OctetSequenceKey.Builder(secretKey).build())))
 
     @Bean
-    fun passwordEncoder(): PasswordEncoder {
-        return PasswordEncoderFactories.createDelegatingPasswordEncoder()
-    }
+    fun passwordEncoder(): PasswordEncoder = PasswordEncoderFactories.createDelegatingPasswordEncoder()
 }

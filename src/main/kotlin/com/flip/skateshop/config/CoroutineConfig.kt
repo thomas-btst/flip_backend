@@ -9,10 +9,7 @@ import org.springframework.context.annotation.Primary
 
 @Configuration
 internal class CoroutineConfig {
-
     @Bean
     @Primary
-    internal fun coroutineScope(): CoroutineScope {
-        return CoroutineScope(SupervisorJob() + Dispatchers.IO)
-    }
+    internal fun coroutineScope(): CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 }

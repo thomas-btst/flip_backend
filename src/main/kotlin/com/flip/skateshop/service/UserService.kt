@@ -37,27 +37,33 @@ class UserService(
         return userRepository.repository.findById(currentUserId)!!
     }
 
-    fun createToken(userId: ObjectId, authorities: List<RoleEnum>): TokenDto {
+    fun createToken(
+        userId: ObjectId,
+        authorities: List<RoleEnum>,
+    ): TokenDto {
         val token = jwtClaimer.createToken(userId.toHexString(), authorities.map { it.toString() })
         return TokenDto(token, authorities)
     }
 
     suspend fun login(loginDto: LoginDto): TokenDto {
         val normalizedEmail = loginDto.email.normalizedEmail()
-        val authentication = authenticationManager
-            .authenticate(UsernamePasswordAuthenticationToken(normalizedEmail, loginDto.password))
-            .awaitSingle()
+        val authentication =
+            authenticationManager
+                .authenticate(UsernamePasswordAuthenticationToken(normalizedEmail, loginDto.password))
+                .awaitSingle()
         val principal = authentication.principal as DomainUserDetails
 
-        if (!principal.enabled)
+        if (!principal.enabled) {
             throw ResponseStatusException(HttpStatus.FORBIDDEN)
+        }
 
         return createToken(principal.id, authentication.authorities.map { RoleEnum.valueOf(it.toString()) })
     }
 
     suspend fun register(registerDto: RegisterDto) {
-        if(userRepository.repository.findOneByEmail(registerDto.email) != null)
+        if (userRepository.repository.findOneByEmail(registerDto.email) != null) {
             throw ResponseStatusException(HttpStatus.CONFLICT, "Email is already used.")
+        }
         val activationKey = randomString(6)
         val user = userRepository.repository.save(userMapper.toUser(registerDto, activationKey))
         mailService.sendActivationKey(user.email, user.firstName, user.lastName, activationKey)
@@ -70,11 +76,14 @@ class UserService(
         mailService.sendActivationKey(user.email, user.firstName, user.lastName, activationKey)
     }
 
-    suspend fun activate(email: String, activationKey: String): TokenDto {
+    suspend fun activate(
+        email: String,
+        activationKey: String,
+    ): TokenDto {
         val normalizedEmail = email.normalizedEmail()
         val user =
             userRepository.activateAccountWithKey(normalizedEmail, activationKey) ?: throw ResponseStatusException(
-                HttpStatus.FORBIDDEN
+                HttpStatus.FORBIDDEN,
             )
         return createToken(user._id, user.roles.toList())
     }
@@ -88,11 +97,12 @@ class UserService(
 
     suspend fun resetPassword(reset: ResetPasswordDto): TokenDto {
         val normalizedEmail = reset.email.normalizedEmail()
-        val user = userRepository.updatePasswordAndActivateWithKey(
-            normalizedEmail,
-            reset.verificationKey,
-            passwordEncoder.encode(reset.newPassword),
-        ) ?: throw ResponseStatusException(HttpStatus.FORBIDDEN)
+        val user =
+            userRepository.updatePasswordAndActivateWithKey(
+                normalizedEmail,
+                reset.verificationKey,
+                passwordEncoder.encode(reset.newPassword),
+            ) ?: throw ResponseStatusException(HttpStatus.FORBIDDEN)
         return createToken(user._id, user.roles.toList())
     }
 }

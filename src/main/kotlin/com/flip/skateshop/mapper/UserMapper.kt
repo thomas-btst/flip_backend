@@ -18,7 +18,10 @@ class UserMapper(
 ) {
     private val keyValidity = properties.security.verificationKey.validityInSeconds
 
-    fun toUser(registerDto: RegisterDto, activationKey: String) = registerDto.run {
+    fun toUser(
+        registerDto: RegisterDto,
+        activationKey: String,
+    ) = registerDto.run {
         User(
             ObjectId(),
             firstName.lowercase().replaceFirstChar { it.uppercase() },
@@ -32,7 +35,8 @@ class UserMapper(
         )
     }
 
-    fun toUserDto(user: User): UserDto = user.run {
-        UserDto(_id.toHexString(), firstName, lastName, email)
-    }
+    fun toUserDto(user: User): UserDto =
+        user.run {
+            UserDto(_id.toHexString(), firstName, lastName, email)
+        }
 }

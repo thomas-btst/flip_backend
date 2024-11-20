@@ -25,11 +25,17 @@ class MongoConfig(
     }
 
     private suspend fun initIndices() {
-        mongoTemplate.indexOps(User::class.java)
-            .ensureIndex(Index(User::email.name, Sort.Direction.ASC).unique()).awaitSingle()
-        mongoTemplate.indexOps(Product::class.java).apply {
-            ensureIndex(Index("_class", Sort.Direction.ASC)).awaitSingle() // Type of the product
-            ensureIndex(Index(Product::price.name, Sort.Direction.ASC)).awaitSingle()
-        }
+        mongoTemplate
+            .indexOps(User::class.java)
+            .ensureIndex(Index(User::email.name, Sort.Direction.ASC).unique())
+            .awaitSingle()
+        mongoTemplate
+            .indexOps(Product::class.java)
+            .apply {
+                ensureIndex(Index("_class", Sort.Direction.ASC)) // Type of the product
+                    .awaitSingle()
+                ensureIndex(Index(Product::price.name, Sort.Direction.ASC))
+                    .awaitSingle()
+            }
     }
 }

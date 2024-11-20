@@ -31,60 +31,82 @@ class UserRepositoryWrapper(
 
     private fun keyExpiration() = Instant.now().plusSeconds(verificationKeyValidity)
 
-    private suspend fun ReactiveMongoTemplate.findAndModify(query: Query, update: Update) =
-        findAndModify(query, update, User::class.java).awaitSingleOrNull()
+    private suspend fun ReactiveMongoTemplate.findAndModify(
+        query: Query,
+        update: Update,
+    ) = findAndModify(query, update, User::class.java).awaitSingleOrNull()
 
-    suspend fun updateResetPasswordKey(email: String, key: String): User? {
+    suspend fun updateResetPasswordKey(
+        email: String,
+        key: String,
+    ): User? {
         val query = Query(User::email isEqualTo email)
-        val update = Update().apply {
-            set((User::resetPasswordKey / VerificationKey::key).toDotPath(), key)
-            set((User::resetPasswordKey / VerificationKey::expiration).toDotPath(), keyExpiration())
-        }
+        val update =
+            Update().apply {
+                set((User::resetPasswordKey / VerificationKey::key).toDotPath(), key)
+                set((User::resetPasswordKey / VerificationKey::expiration).toDotPath(), keyExpiration())
+            }
         return mongoTemplate.findAndModify(query, update)
     }
 
-    suspend fun updateActivationKey(email: String, key: String): User? {
-        val query = Query().apply {
-            addCriteria(User::email isEqualTo email)
-            addCriteria(User::enabled isEqualTo false)
-        }
-        val update = Update().apply {
-            set((User::activationKey / VerificationKey::key).toDotPath(), key)
-            set((User::activationKey / VerificationKey::expiration).toDotPath(), keyExpiration())
-        }
+    suspend fun updateActivationKey(
+        email: String,
+        key: String,
+    ): User? {
+        val query =
+            Query().apply {
+                addCriteria(User::email isEqualTo email)
+                addCriteria(User::enabled isEqualTo false)
+            }
+        val update =
+            Update().apply {
+                set((User::activationKey / VerificationKey::key).toDotPath(), key)
+                set((User::activationKey / VerificationKey::expiration).toDotPath(), keyExpiration())
+            }
         return mongoTemplate.findAndModify(query, update)
     }
 
-    suspend fun activateAccountWithKey(email: String, activationKey: String): User? {
-        val query = Query().apply {
-            addCriteria(User::email isEqualTo email)
-            addCriteria(Criteria.where((User::activationKey / VerificationKey::key).toDotPath()).`is`(activationKey))
-            addCriteria(
-                Criteria.where((User::activationKey / VerificationKey::expiration).toDotPath()).gt(Instant.now())
-            )
-        }
-        val update = Update().apply {
-            unset(User::activationKey.name)
-            set(User::enabled.name, true)
-        }
+    suspend fun activateAccountWithKey(
+        email: String,
+        activationKey: String,
+    ): User? {
+        val query =
+            Query().apply {
+                addCriteria(User::email isEqualTo email)
+                addCriteria(Criteria.where((User::activationKey / VerificationKey::key).toDotPath()).`is`(activationKey))
+                addCriteria(
+                    Criteria.where((User::activationKey / VerificationKey::expiration).toDotPath()).gt(Instant.now()),
+                )
+            }
+        val update =
+            Update().apply {
+                unset(User::activationKey.name)
+                set(User::enabled.name, true)
+            }
         return mongoTemplate.findAndModify(query, update)
     }
 
-    suspend fun updatePasswordAndActivateWithKey(email: String, resetPasswordKey: String, newPassword: String): User? {
-        val query = Query().apply {
-            addCriteria(User::email isEqualTo email)
-            addCriteria(
-                Criteria.where((User::resetPasswordKey / VerificationKey::key).toDotPath()).`is`(resetPasswordKey)
-            )
-            addCriteria(
-                Criteria.where((User::resetPasswordKey / VerificationKey::expiration).toDotPath()).gt(Instant.now())
-            )
-        }
-        val update = Update().apply {
-            unset(User::resetPasswordKey.name)
-            set(User::password.name, newPassword)
-            set(User::enabled.name, true)
-        }
+    suspend fun updatePasswordAndActivateWithKey(
+        email: String,
+        resetPasswordKey: String,
+        newPassword: String,
+    ): User? {
+        val query =
+            Query().apply {
+                addCriteria(User::email isEqualTo email)
+                addCriteria(
+                    Criteria.where((User::resetPasswordKey / VerificationKey::key).toDotPath()).`is`(resetPasswordKey),
+                )
+                addCriteria(
+                    Criteria.where((User::resetPasswordKey / VerificationKey::expiration).toDotPath()).gt(Instant.now()),
+                )
+            }
+        val update =
+            Update().apply {
+                unset(User::resetPasswordKey.name)
+                set(User::password.name, newPassword)
+                set(User::enabled.name, true)
+            }
         return mongoTemplate.findAndModify(query, update)
     }
 }

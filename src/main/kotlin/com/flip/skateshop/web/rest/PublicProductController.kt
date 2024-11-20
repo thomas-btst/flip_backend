@@ -19,12 +19,13 @@ class PublicProductController(
         @RequestParam minPrice: Long?,
         @RequestParam maxPrice: Long?,
         @RequestParam search: String = "",
-    ): ProductPaginationDto = productService.getProducts(
-        limit = limit,
-        pagination = pagination,
-        types = types,
-        minPrice = minPrice,
-        maxPrice = maxPrice,
-        search = search,
-    )
+    ): ProductPaginationDto =
+        productService.getProducts(
+            limit = limit,
+            pagination = pagination,
+            types = types,
+            minPrice = minPrice,
+            maxPrice = maxPrice,
+            search = search,
+        )
 }

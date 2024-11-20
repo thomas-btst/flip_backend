@@ -9,10 +9,9 @@ import reactor.core.publisher.Mono
 
 @Service
 class DomainUserDetailsService(
-    private val userRepository: UserRepository
+    private val userRepository: UserRepository,
 ) : ReactiveUserDetailsService {
-    override fun findByUsername(username: String): Mono<UserDetails> {
-        return mono { userRepository.findOneByEmail(username) }
+    override fun findByUsername(username: String): Mono<UserDetails> =
+        mono { userRepository.findOneByEmail(username) }
             .map { DomainUserDetails(it) }
-    }
 }

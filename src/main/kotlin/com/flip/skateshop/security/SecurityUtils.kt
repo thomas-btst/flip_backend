@@ -1,6 +1,5 @@
 package com.flip.skateshop.security
 
-import kotlinx.coroutines.reactive.awaitFirst
 import kotlinx.coroutines.reactive.awaitFirstOrNull
 import org.bson.types.ObjectId
 import org.springframework.security.core.context.ReactiveSecurityContextHolder
@@ -13,7 +12,5 @@ class SecurityUtils {
         return context?.authentication?.name?.let { ObjectId(it) }
     }
 
-    suspend fun getCurrentUserId(): ObjectId {
-        return getCurrentUserIdOrNull()!!
-    }
+    suspend fun getCurrentUserId(): ObjectId = getCurrentUserIdOrNull()!!
 }

@@ -24,20 +24,29 @@ class FileService(
         const val PRODUCT_PICTURE_PREFIX = "$PUBLIC_ROOT/$PRODUCT_ROOT/%s/pictures"
     }
 
-    suspend fun putProductPicture(productId: ObjectId, file: FilePart): String {
+    suspend fun putProductPicture(
+        productId: ObjectId,
+        file: FilePart,
+    ): String {
         val key = "${PRODUCT_PICTURE_PREFIX.format(productId)}/${file.name()}"
         putFile(key, file)
         return key
     }
 
-    private suspend fun putFile(key: String, file: FilePart): ObjectWriteResponse {
+    private suspend fun putFile(
+        key: String,
+        file: FilePart,
+    ): ObjectWriteResponse {
         val data = file.toByteArray()
-        val request = PutObjectArgs.builder().apply {
-            bucket(properties.bucket)
-            `object`(key)
-            contentType(file.headers().contentType?.toString())
-            stream(ByteArrayInputStream(data), data.size.toLong(), -1L)
-        }.build()
+        val request =
+            PutObjectArgs
+                .builder()
+                .apply {
+                    bucket(properties.bucket)
+                    `object`(key)
+                    contentType(file.headers().contentType?.toString())
+                    stream(ByteArrayInputStream(data), data.size.toLong(), -1L)
+                }.build()
         return minioClient.putObject(request).await()
     }
 }

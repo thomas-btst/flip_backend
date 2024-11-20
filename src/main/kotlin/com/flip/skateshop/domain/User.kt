@@ -23,8 +23,8 @@ class User(
     }
 }
 
-enum class RoleEnum{
-    ADMIN
+enum class RoleEnum {
+    ADMIN,
 }
 
 class VerificationKey(
