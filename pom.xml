@@ -166,6 +166,14 @@
             <scope>test</scope>
         </dependency>
 
+
+        <!-- Swagger documentation -->
+        <dependency>
+            <groupId>org.springdoc</groupId>
+            <artifactId>springdoc-openapi-starter-webflux-ui</artifactId>
+            <version>2.6.0</version>
+        </dependency>
+
         <!-- Additional Dependencies -->
         <dependency>
             <groupId>com.fasterxml.jackson.module</groupId>

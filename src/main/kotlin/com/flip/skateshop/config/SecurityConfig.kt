@@ -22,7 +22,11 @@ import org.springframework.security.core.userdetails.ReactiveUserDetailsPassword
 import org.springframework.security.core.userdetails.ReactiveUserDetailsService
 import org.springframework.security.crypto.factory.PasswordEncoderFactories
 import org.springframework.security.crypto.password.PasswordEncoder
-import org.springframework.security.oauth2.jwt.*
+import org.springframework.security.oauth2.jwt.Jwt
+import org.springframework.security.oauth2.jwt.JwtEncoder
+import org.springframework.security.oauth2.jwt.NimbusJwtEncoder
+import org.springframework.security.oauth2.jwt.NimbusReactiveJwtDecoder
+import org.springframework.security.oauth2.jwt.ReactiveJwtDecoder
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter
 import org.springframework.security.oauth2.server.resource.authentication.ReactiveJwtAuthenticationConverterAdapter
 import org.springframework.security.web.server.SecurityWebFilterChain
@@ -54,6 +58,16 @@ class SecurityConfig(
             x509 {}
             csrf { disable() }
             authorizeExchange {
+                authorize(
+                    pathMatchers(
+                        "/v3/api-docs/**",
+                        "/swagger-ui.html",
+                        "/swagger-ui/**",
+                        "/webjars/swagger-ui.html",
+                        "/webjars/swagger-ui/**",
+                    ),
+                    permitAll,
+                )
                 authorize("/auth/**", permitAll)
                 authorize("/public/**", permitAll)
                 authorize("/users/**", authenticated)

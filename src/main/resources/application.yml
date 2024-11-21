@@ -1,5 +1,14 @@
 server.port: 8080
 
+springdoc:
+  paths-to-match: /**
+  packages-to-scan: com.flip.skateshop
+  api-docs:
+    enabled: true
+  swagger-ui:
+    enabled: true
+    path: /swagger-ui.html
+
 spring:
   application.name: skateshop
   data:

@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonSubTypes
 import com.fasterxml.jackson.annotation.JsonTypeInfo
 import com.flip.skateshop.domain.Product
 import com.flip.skateshop.domain.ProductType
+import jakarta.validation.constraints.NotBlank
 
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type", visible = true)
 @JsonSubTypes(
@@ -15,6 +16,7 @@ import com.flip.skateshop.domain.ProductType
     JsonSubTypes.Type(value = CreateProductDto.Truck::class, name = Product.Truck.CLASS_NAME),
 )
 sealed class CreateProductDto(
+    @NotBlank
     val name: String,
     val description: String,
     val price: Long,
