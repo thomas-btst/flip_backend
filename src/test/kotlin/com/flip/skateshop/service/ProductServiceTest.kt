@@ -1,0 +1,219 @@
+package com.flip.skateshop.service
+
+import com.flip.skateshop.domain.Product
+import com.flip.skateshop.domain.ProductType
+import com.flip.skateshop.mapper.ProductMapper
+import com.flip.skateshop.repository.ProductRepositoryWrapper
+import com.flip.skateshop.util.MongoDatabaseCleaner
+import com.flip.skateshop.web.rest.dto.CreateProductDto
+import io.mockk.mockk
+import kotlinx.coroutines.test.runTest
+import org.bson.types.ObjectId
+import org.junit.jupiter.api.Test
+import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.http.codec.multipart.FilePart
+import kotlin.test.assertEquals
+import kotlin.test.assertNotNull
+
+class ProductServiceTest
+    @Autowired
+    constructor(
+        private val productRepository: ProductRepositoryWrapper,
+        private val productMapper: ProductMapper,
+    ) : MongoDatabaseCleaner() {
+        private val productService = ProductService(productRepository, productMapper, mockk<FileService>(relaxed = true))
+
+        suspend fun createProducts(number: Int) {
+            for (i in 1..number) {
+                val product =
+                    Product.Skate(
+                        ObjectId(),
+                        "Name",
+                        "Description",
+                        8,
+                        "",
+                    )
+                productRepository.repository.save(product)
+            }
+        }
+
+        @Test
+        fun `should add a product successfully`() =
+            runTest {
+                val productDto = CreateProductDto.Skate("Name", "Description", 8)
+                val file = mockk<FilePart>(relaxed = true)
+                val productId =
+                    productService.addProduct(
+                        productDto,
+                        file,
+                    )
+                val product = productRepository.repository.findById(productId)
+                assertNotNull(product)
+                productMapper
+                    .toProduct(
+                        productId,
+                        productDto,
+                        product.picture,
+                    ).run {
+                        assertEquals(name, product.name)
+                        assertEquals(description, product.description)
+                        assertEquals(price, product.price)
+                        assertEquals(
+                            productMapper.toProductDto(this).type,
+                            productMapper.toProductDto(product).type,
+                        )
+                    }
+            }
+
+        @Test
+        fun `should list products successfully`() =
+            runTest {
+                assertEquals(
+                    0,
+                    productService
+                        .getProducts(
+                            20,
+                            null,
+                            emptySet(),
+                            0,
+                            0,
+                            "",
+                        ).products
+                        .toList()
+                        .size,
+                )
+
+                val productsNumber = 4
+                createProducts(productsNumber)
+                assertEquals(
+                    productsNumber,
+                    productService
+                        .getProducts(
+                            20,
+                            null,
+                            emptySet(),
+                            null,
+                            null,
+                            "",
+                        ).products
+                        .toList()
+                        .size,
+                )
+            }
+
+        @Test
+        fun `should paginate products correctly`() =
+            runTest {
+                val limit = 20
+                val productsNumber = 30
+                createProducts(productsNumber)
+
+                val firstPagination =
+                    productService.getProducts(
+                        limit,
+                        null,
+                        emptySet(),
+                        null,
+                        null,
+                        "",
+                    )
+                val secondPagination =
+                    productService.getProducts(
+                        limit,
+                        ObjectId(firstPagination.products.last().id),
+                        emptySet(),
+                        null,
+                        null,
+                        "",
+                    )
+
+                assertEquals(limit, firstPagination.products.size)
+                assertEquals(productsNumber - limit, secondPagination.products.size)
+                assertEquals(firstPagination.hasMore, true)
+                assertEquals(secondPagination.hasMore, false)
+            }
+
+        @Test
+        fun `should filter products correctly`() =
+            runTest {
+                productRepository.repository.save(
+                    Product.Skate(
+                        ObjectId(),
+                        "Skate 1",
+                        "Description",
+                        8,
+                        "",
+                    ),
+                )
+                productRepository.repository.save(
+                    Product.Skate(
+                        ObjectId(),
+                        "Skate 2",
+                        "Description",
+                        10,
+                        "",
+                    ),
+                )
+                productRepository.repository.save(
+                    Product.Wheel(
+                        ObjectId(),
+                        "Wheel 1",
+                        "Description",
+                        12,
+                        "",
+                    ),
+                )
+
+                val findAll =
+                    productService.getProducts(
+                        20,
+                        null,
+                        emptySet(),
+                        null,
+                        null,
+                        "",
+                    )
+                val findWheel =
+                    productService.getProducts(
+                        20,
+                        null,
+                        setOf(ProductType.WHEEL),
+                        null,
+                        null,
+                        "",
+                    )
+                val findNameSkate =
+                    productService.getProducts(
+                        20,
+                        null,
+                        emptySet(),
+                        null,
+                        null,
+                        "kate ",
+                    )
+                val findBadName =
+                    productService.getProducts(
+                        20,
+                        null,
+                        emptySet(),
+                        null,
+                        null,
+                        "skateboard",
+                    )
+                val findByPrice =
+                    productService.getProducts(
+                        20,
+                        null,
+                        emptySet(),
+                        9,
+                        11,
+                        "",
+                    )
+
+                assertEquals(3, findAll.products.size)
+                assertEquals(1, findWheel.products.size)
+                assertEquals(2, findNameSkate.products.size)
+                assertEquals(0, findBadName.products.size)
+                assertEquals(1, findByPrice.products.size)
+            }
+    }

@@ -151,6 +151,21 @@
             <version>${kotlin.version}</version>
         </dependency>
 
+        <dependency>
+            <groupId>org.jetbrains.kotlinx</groupId>
+            <artifactId>kotlinx-coroutines-test</artifactId>
+            <version>${kotlinx.version}</version>
+            <type>pom</type>
+        </dependency>
+
+        <!-- Mock Object -->
+        <dependency>
+            <groupId>io.mockk</groupId>
+            <artifactId>mockk-jvm</artifactId>
+            <version>1.13.12</version>
+            <scope>test</scope>
+        </dependency>
+
         <!-- Additional Dependencies -->
         <dependency>
             <groupId>com.fasterxml.jackson.module</groupId>
