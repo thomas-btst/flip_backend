@@ -25,27 +25,39 @@ build:
 test:
   stage: test
   image: $CI_REGISTRY_IMAGE
+  services:
+    - name: 'minio/minio:latest'
+      variables:
+        MINIO_ROOT_USER: minioadmin
+        MINIO_ROOT_PASSWORD: password
   script:
-    - mvn test
+    - mvn test -Dspring.data.mongodb.uri="mongodb+srv://$ATLAS_MONGODB_USER:$ATLAS_MONGODB_PASSWORD@$ATLAS_MONGODB_HOST" -Dspring.data.mongodb.database="flip_test"
+    - mvn jacoco:report
   artifacts:
     when: always
     reports:
       junit: target/surefire-reports/*.xml
+      coverage_report:
+        coverage_format: jacoco
+        path: target/site/jacoco/jacoco.xml
     paths:
       - target/surefire-reports/
+      - target/site/jacoco/jacoco.xml
+    expire_in: 1 week
+  coverage: '/Total.*?([0-9]{1,3})%/'
 
 code-review:
   stage: test
   image: $CI_REGISTRY_IMAGE
   script:
-    - set +e
-    - mvn ktlint:check; STATUS=$?
-    - set -e
-    - python3 checkstyle_to_junit.py target/ktlint.xml target/ktlint-junit.xml
-    - exit $STATUS
+    - curl -sSLO https://github.com/pinterest/ktlint/releases/download/1.4.1/ktlint
+    - chmod a+x ktlint
+    - mkdir -p target
+    - ./ktlint -l none --reporter=gitlab,artifact=~/.m2/repository/io/github/tobi2k/ktlint-gitlab-reporter/2.0.1/ktlint-gitlab-reporter-2.0.1.jar > target/ktlint.json
   artifacts:
     when: always
     reports:
-      junit: target/ktlint-junit.xml
+      codequality: target/ktlint.json
     paths:
-      - target/ktlint-junit.xml
+      - target/ktlint.json
+    expire_in: 1 week

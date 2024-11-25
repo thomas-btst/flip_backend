@@ -158,6 +158,12 @@
             <version>2.17.2</version>
         </dependency>
 
+        <dependency>
+            <groupId>io.github.tobi2k</groupId>
+            <artifactId>ktlint-gitlab-reporter</artifactId>
+            <version>2.0.1</version>
+        </dependency>
+
     </dependencies>
 
     <build>
@@ -216,23 +222,31 @@
                         <goals>
                             <goal>check</goal>
                         </goals>
+                        <configuration>
+                            <failOnViolation>true</failOnViolation>
+                        </configuration>
                     </execution>
                 </executions>
-                <configuration>
-                    <failOnViolation>true</failOnViolation>
-                    <reporters>
-                        <reporter>
-                            <name>checkstyle</name>
-                            <output>${project.build.directory}/ktlint.xml</output>
-                            <properties>
-                                <property>
-                                    <name>group_by_file</name>
-                                    <value>true</value>
-                                </property>
-                            </properties>
-                        </reporter>
-                    </reporters>
-                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.jacoco</groupId>
+                <artifactId>jacoco-maven-plugin</artifactId>
+                <version>0.8.10</version>
+                <executions>
+                    <execution>
+                        <id>prepare-agent</id>
+                        <goals>
+                            <goal>prepare-agent</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>report</id>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>report</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
     </build>
