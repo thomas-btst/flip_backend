@@ -27,11 +27,13 @@ test:
   image: $CI_REGISTRY_IMAGE
   services:
     - name: 'minio/minio:latest'
+      command: [ 'server', '/minio' ]
+      alias: minio
       variables:
         MINIO_ROOT_USER: minioadmin
         MINIO_ROOT_PASSWORD: password
   script:
-    - mvn test -Dspring.data.mongodb.uri="mongodb+srv://$ATLAS_MONGODB_USER:$ATLAS_MONGODB_PASSWORD@$ATLAS_MONGODB_HOST" -Dspring.data.mongodb.database="flip_test"
+    - mvn test -Dspring.data.mongodb.uri="mongodb+srv://$ATLAS_MONGODB_USER:$ATLAS_MONGODB_PASSWORD@$ATLAS_MONGODB_HOST" -Dspring.data.mongodb.database="flip_test" -Dskateshop.minio.endpoint="http://minio:9000"
     - mvn jacoco:report
   artifacts:
     when: always

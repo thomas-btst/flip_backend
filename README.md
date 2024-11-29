@@ -56,7 +56,11 @@ cd flip_backend
 ``` bash
 docker compose up -d
 ```
-3. Start the application with Maven :
+3. Launch database seeder (Optional) :
+``` bash
+./mvnw spring-boot:run -Dspring-boot.run.arguments="--seed"
+```
+4. Start the application with Maven :
 ``` bash
 ./mvnw spring-boot:run
 ```
@@ -75,6 +79,16 @@ docker compose up -d
 ``` bash
 ./mvnw ktlint:check
 ```
+### Run database seeder
+This tool also creates an admin user with the email `admin@flip.fr` and the password `admin`.
+``` bash
+./mvnw spring-boot:run -Dspring-boot.run.arguments="--seed"
+```
+You can also seed specific collections by specifying their names in a comma-separated list. For example, to seed only the `users` and `products` collections, use the following command:
+``` bash
+./mvnw spring-boot:run -Dspring-boot.run.arguments="--seed=users,products"
+```
+Supported collections names: users, products, etc.
 #### Open API : Swagger UI
 Access the Swagger API to http://localhost:8080/swagger-ui.html
 

@@ -4,7 +4,7 @@ import com.flip.skateshop.domain.Product
 import com.flip.skateshop.domain.ProductType
 import com.flip.skateshop.mapper.ProductMapper
 import com.flip.skateshop.repository.ProductRepositoryWrapper
-import com.flip.skateshop.util.MongoDatabaseCleaner
+import com.flip.skateshop.util.ServicesCleaner
 import com.flip.skateshop.web.rest.dto.CreateProductDto
 import io.mockk.mockk
 import kotlinx.coroutines.test.runTest
@@ -20,7 +20,7 @@ class ProductServiceTest
     constructor(
         private val productRepository: ProductRepositoryWrapper,
         private val productMapper: ProductMapper,
-    ) : MongoDatabaseCleaner() {
+    ) : ServicesCleaner() {
         private val productService = ProductService(productRepository, productMapper, mockk<FileService>(relaxed = true))
 
         suspend fun createProducts(number: Int) {

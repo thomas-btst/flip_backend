@@ -8,7 +8,7 @@ import com.flip.skateshop.mapper.UserMapper
 import com.flip.skateshop.repository.UserRepositoryWrapper
 import com.flip.skateshop.security.JwtClaimer
 import com.flip.skateshop.security.SecurityUtils
-import com.flip.skateshop.util.MongoDatabaseCleaner
+import com.flip.skateshop.util.ServicesCleaner
 import com.flip.skateshop.web.rest.dto.LoginDto
 import com.flip.skateshop.web.rest.dto.RegisterDto
 import com.flip.skateshop.web.rest.dto.ResetPasswordDto
@@ -39,7 +39,7 @@ class UserServiceTest
         private val skateshopProperties: SkateshopProperties,
         userMapper: UserMapper,
         authenticationManager: ReactiveAuthenticationManager,
-    ) : MongoDatabaseCleaner() {
+    ) : ServicesCleaner() {
         private val userService =
             UserService(
                 userRepository,
