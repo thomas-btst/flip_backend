@@ -6,6 +6,7 @@ import com.flip.skateshop.mapper.ProductMapper
 import com.flip.skateshop.repository.ProductRepositoryWrapper
 import com.flip.skateshop.util.ServicesCleaner
 import com.flip.skateshop.web.rest.dto.CreateProductDto
+import io.mockk.coVerify
 import io.mockk.mockk
 import kotlinx.coroutines.test.runTest
 import org.bson.types.ObjectId
@@ -21,7 +22,8 @@ class ProductServiceTest
         private val productRepository: ProductRepositoryWrapper,
         private val productMapper: ProductMapper,
     ) : ServicesCleaner() {
-        private val productService = ProductService(productRepository, productMapper, mockk<FileService>(relaxed = true))
+        private val fileService = mockk<FileService>(relaxed = true)
+        private val productService = ProductService(productRepository, productMapper, fileService)
 
         suspend fun createProducts(number: Int) {
             for (i in 1..number) {
@@ -47,8 +49,10 @@ class ProductServiceTest
                         productDto,
                         file,
                     )
+                coVerify { fileService.putProductPicture(any(), file) }
                 val product = productRepository.repository.findById(productId)
                 assertNotNull(product)
+                assertNotNull(product.picture)
                 productMapper
                     .toProduct(
                         productId,

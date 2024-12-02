@@ -1,6 +1,7 @@
 package com.flip.skateshop.service
 
 import com.flip.skateshop.config.SkateshopProperties
+import com.flip.skateshop.domain.Address
 import com.flip.skateshop.domain.RoleEnum
 import com.flip.skateshop.domain.User
 import com.flip.skateshop.domain.VerificationKey
@@ -12,6 +13,8 @@ import com.flip.skateshop.util.ServicesCleaner
 import com.flip.skateshop.web.rest.dto.LoginDto
 import com.flip.skateshop.web.rest.dto.RegisterDto
 import com.flip.skateshop.web.rest.dto.ResetPasswordDto
+import io.mockk.coEvery
+import io.mockk.coVerify
 import io.mockk.mockk
 import kotlinx.coroutines.reactor.awaitSingle
 import kotlinx.coroutines.test.runTest
@@ -20,6 +23,7 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpStatus
+import org.springframework.http.codec.multipart.FilePart
 import org.springframework.security.authentication.BadCredentialsException
 import org.springframework.security.authentication.ReactiveAuthenticationManager
 import org.springframework.security.crypto.password.PasswordEncoder
@@ -40,15 +44,18 @@ class UserServiceTest
         userMapper: UserMapper,
         authenticationManager: ReactiveAuthenticationManager,
     ) : ServicesCleaner() {
+        private val securityUtils = mockk<SecurityUtils>()
+        private val fileService = mockk<FileService>(relaxed = true)
         private val userService =
             UserService(
                 userRepository,
                 userMapper,
                 authenticationManager,
                 jwtClaimer,
-                mockk<SecurityUtils>(),
+                securityUtils,
                 mockk<MailService>(relaxed = true),
                 passwordEncoder,
+                fileService,
             )
 
         suspend fun createUser(
@@ -67,13 +74,46 @@ class UserServiceTest
                 firstName,
                 lastName,
                 email,
+                "0782713311",
+                Address(
+                    "27 rue Flip",
+                    "",
+                    "13000",
+                    "Marseille",
+                ),
                 passwordEncoder.encode(password),
                 roles,
+                null,
                 activationKey,
                 resetPasswordKey,
                 enabled,
             ),
         )
+
+        @Test
+        fun `should get current user successfully`() =
+            runTest {
+                val user = createUser()
+                coEvery { securityUtils.getCurrentUserId() } returns user._id
+                userService.getCurrentUser().run {
+                    assertEquals(user._id, _id)
+                    assertEquals(user.firstName, firstName)
+                    assertEquals(user.lastName, lastName)
+                    assertEquals(user.email, email)
+                    assertEquals(user.phone, phone)
+                    user.address?.run {
+                        assertEquals(line1, address?.line1)
+                        assertEquals(line2, address?.line2)
+                        assertEquals(zipCode, address?.zipCode)
+                        assertEquals(city, address?.city)
+                    }
+                    assertEquals(user.password, password)
+                    assertEquals(user.roles, roles)
+                    assertEquals(user.activationKey, activationKey)
+                    assertEquals(user.resetPasswordKey, resetPasswordKey)
+                    assertEquals(user.enabled, enabled)
+                }
+            }
 
         @Test
         fun `should create a valid token`() =
@@ -343,4 +383,19 @@ class UserServiceTest
                 val updatedUser = userRepository.repository.findById(user._id)
                 assert(!passwordEncoder.matches(newPassword, updatedUser?.password))
             }
+
+        @Test
+        fun `should update logo successfully`() {
+            runTest {
+                val user = createUser()
+                val logo = mockk<FilePart>()
+                coEvery { securityUtils.getCurrentUserId() } returns user._id
+
+                userService.updateCurrentUserLogo(logo)
+
+                val updatedUser = userRepository.repository.findById(user._id)
+                coVerify { fileService.putUserLogo(user._id, logo) }
+                assertNotNull(updatedUser?.logo)
+            }
+        }
     }

@@ -32,18 +32,15 @@ class SeederTest
         fun `should start all beans successfully`() {
             val seeder1 = mockk<Seeder>(relaxed = true)
             val seeder2 = mockk<Seeder>(relaxed = true)
-
             every { applicationContext.getBeansWithAnnotation(SeederAnnotation::class.java) } returns
                 mapOf(
                     "seeder1" to seeder1,
                     "seeder2" to seeder2,
                 )
-
             every { seeder1.name } returns "seederOne"
             every { seeder2.name } returns "seederTwo"
 
             val seedRunner = SeederConfig(applicationContext)
-
             seedRunner.runSeeders(emptyList())
 
             verify { seeder1.seed() }

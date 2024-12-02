@@ -21,7 +21,25 @@ class FileService(
 
     companion object {
         const val PRODUCT_ROOT = "products"
+        const val USER_ROOT = "products"
         const val PRODUCT_PICTURE_PREFIX = "$PUBLIC_ROOT/$PRODUCT_ROOT/%s/pictures"
+        const val USER_LOGO_PREFIX = "$PUBLIC_ROOT/$USER_ROOT/%s/logos"
+    }
+
+    suspend fun putUserLogo(
+        userId: ObjectId,
+        file: FilePart,
+    ): String = putUserLogo(userId, file.name(), file.toByteArray(), file.headers().contentType.toString())
+
+    suspend fun putUserLogo(
+        userId: ObjectId,
+        filename: String,
+        data: ByteArray,
+        type: String?,
+    ): String {
+        val key = "${USER_LOGO_PREFIX.format(userId)}/$filename"
+        putFile(key, data, type)
+        return key
     }
 
     suspend fun putProductPicture(

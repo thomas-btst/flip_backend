@@ -3,6 +3,8 @@ package com.flip.skateshop.repository
 import com.flip.skateshop.config.SkateshopProperties
 import com.flip.skateshop.domain.User
 import com.flip.skateshop.domain.VerificationKey
+import com.flip.skateshop.web.rest.dto.UpdateUserDto
+import kotlinx.coroutines.reactive.awaitFirst
 import kotlinx.coroutines.reactor.awaitSingleOrNull
 import org.bson.types.ObjectId
 import org.springframework.data.mapping.div
@@ -12,6 +14,8 @@ import org.springframework.data.mongodb.core.query.Criteria
 import org.springframework.data.mongodb.core.query.Query
 import org.springframework.data.mongodb.core.query.Update
 import org.springframework.data.mongodb.core.query.isEqualTo
+import org.springframework.data.mongodb.core.update
+import org.springframework.data.mongodb.core.updateFirst
 import org.springframework.data.repository.kotlin.CoroutineCrudRepository
 import org.springframework.stereotype.Repository
 import java.time.Instant
@@ -108,5 +112,32 @@ class UserRepositoryWrapper(
                 set(User::enabled.name, true)
             }
         return mongoTemplate.findAndModify(query, update)
+    }
+
+    suspend fun updateUserProfile(
+        userId: ObjectId,
+        userDto: UpdateUserDto,
+    ) {
+        val query = Query().addCriteria(User::_id isEqualTo userId)
+        val update =
+            Update().apply {
+                set(User::firstName.name, userDto.firstName)
+                set(User::lastName.name, userDto.lastName)
+                set(User::phone.name, userDto.phone)
+                set(User::address.name, userDto.address)
+            }
+        mongoTemplate.updateFirst(query, update, User::class.java).awaitFirst()
+    }
+
+    suspend fun updateUserLogo(
+        userId: ObjectId,
+        logo: String,
+    ) {
+        val query = Query().addCriteria(User::_id isEqualTo userId)
+        val update =
+            Update().apply {
+                set(User::logo.name, logo)
+            }
+        mongoTemplate.updateFirst(query, update, User::class.java).awaitFirst()
     }
 }

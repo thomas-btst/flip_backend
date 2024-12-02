@@ -13,9 +13,11 @@ import com.flip.skateshop.web.rest.dto.LoginDto
 import com.flip.skateshop.web.rest.dto.RegisterDto
 import com.flip.skateshop.web.rest.dto.ResetPasswordDto
 import com.flip.skateshop.web.rest.dto.TokenDto
+import com.flip.skateshop.web.rest.dto.UpdateUserDto
 import kotlinx.coroutines.reactive.awaitSingle
 import org.bson.types.ObjectId
 import org.springframework.http.HttpStatus
+import org.springframework.http.codec.multipart.FilePart
 import org.springframework.security.authentication.ReactiveAuthenticationManager
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
 import org.springframework.security.crypto.password.PasswordEncoder
@@ -31,10 +33,24 @@ class UserService(
     private val securityUtils: SecurityUtils,
     private val mailService: MailService,
     private val passwordEncoder: PasswordEncoder,
+    private val fileService: FileService,
 ) {
     suspend fun getCurrentUser(): User {
         val currentUserId = securityUtils.getCurrentUserId()
         return userRepository.repository.findById(currentUserId)!!
+    }
+
+    suspend fun updateCurrentUserProfile(userDto: UpdateUserDto) {
+        userRepository.updateUserProfile(
+            securityUtils.getCurrentUserId(),
+            userMapper.toValidUpdateUserDto(userDto),
+        )
+    }
+
+    suspend fun updateCurrentUserLogo(logo: FilePart) {
+        val userId = securityUtils.getCurrentUserId()
+        val path = fileService.putUserLogo(userId, logo)
+        userRepository.updateUserLogo(userId, path)
     }
 
     fun createToken(

@@ -1,10 +1,12 @@
 package com.flip.skateshop.mapper
 
 import com.flip.skateshop.config.SkateshopProperties
+import com.flip.skateshop.domain.Address
 import com.flip.skateshop.domain.User
 import com.flip.skateshop.domain.VerificationKey
 import com.flip.skateshop.extention.normalizedEmail
 import com.flip.skateshop.web.rest.dto.RegisterDto
+import com.flip.skateshop.web.rest.dto.UpdateUserDto
 import com.flip.skateshop.web.rest.dto.UserDto
 import org.bson.types.ObjectId
 import org.springframework.security.crypto.password.PasswordEncoder
@@ -15,6 +17,7 @@ import java.time.Instant
 class UserMapper(
     private val passwordEncoder: PasswordEncoder,
     properties: SkateshopProperties,
+    private val fileMapper: FileMapper,
 ) {
     private val keyValidity = properties.security.verificationKey.validityInSeconds
 
@@ -24,11 +27,14 @@ class UserMapper(
     ) = registerDto.run {
         User(
             ObjectId(),
-            firstName.lowercase().replaceFirstChar { it.uppercase() },
-            lastName.uppercase(),
-            email.normalizedEmail(),
+            firstName.trim().lowercase().replaceFirstChar { it.uppercase() },
+            lastName.trim().uppercase(),
+            email.trim().normalizedEmail(),
+            null,
+            null,
             passwordEncoder.encode(password),
             emptySet(),
+            null,
             VerificationKey(activationKey, Instant.now().plusSeconds(keyValidity)),
             null,
             false,
@@ -37,6 +43,21 @@ class UserMapper(
 
     fun toUserDto(user: User): UserDto =
         user.run {
-            UserDto(_id.toHexString(), firstName, lastName, email)
+            UserDto(_id.toHexString(), firstName, lastName, email, phone, address, logo?.let(fileMapper::toPublicPath))
+        }
+
+    fun toValidUpdateUserDto(userDto: UpdateUserDto): UpdateUserDto =
+        userDto.run {
+            UpdateUserDto(
+                firstName.trim(),
+                lastName.trim(),
+                phone,
+                Address(
+                    address.line1.trim(),
+                    address.line2.trim(),
+                    address.zipCode,
+                    address.city.trim().replaceFirstChar { it.uppercase() },
+                ),
+            )
         }
 }

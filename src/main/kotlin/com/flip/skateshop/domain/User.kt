@@ -1,8 +1,10 @@
 package com.flip.skateshop.domain
 
+import jakarta.validation.constraints.NotBlank
 import org.bson.types.ObjectId
 import org.springframework.data.annotation.Id
 import org.springframework.data.mongodb.core.mapping.Document
+import validator.ZipCodeFormat
 import java.time.Instant
 
 @Document(User.DOCUMENT_NAME)
@@ -12,8 +14,11 @@ class User(
     val firstName: String,
     val lastName: String,
     val email: String,
+    val phone: String?,
+    val address: Address?,
     val password: String,
     val roles: Set<RoleEnum>,
+    val logo: String?,
     val activationKey: VerificationKey?,
     val resetPasswordKey: VerificationKey?,
     val enabled: Boolean,
@@ -30,4 +35,14 @@ enum class RoleEnum {
 class VerificationKey(
     val key: String,
     val expiration: Instant,
+)
+
+class Address(
+    @field:NotBlank
+    val line1: String,
+    val line2: String,
+    @field:ZipCodeFormat
+    val zipCode: String,
+    @field:NotBlank
+    val city: String,
 )

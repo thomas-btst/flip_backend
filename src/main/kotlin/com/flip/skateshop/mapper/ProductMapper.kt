@@ -17,13 +17,15 @@ class ProductMapper(
         picture: String,
     ): Product =
         productDto.run {
+            val trimedName = name.trim()
+            val trimedDescription = description.trim()
             when (productDto) {
-                is CreateProductDto.Skate -> Skate(ObjectId(), name, description, price, picture)
-                is CreateProductDto.Deck -> Deck(ObjectId(), name, description, price, picture)
-                is CreateProductDto.Wheel -> Wheel(ObjectId(), name, description, price, picture)
-                is CreateProductDto.Bearing -> Bearing(ObjectId(), name, description, price, picture)
-                is CreateProductDto.GridTape -> GridTape(ObjectId(), name, description, price, picture)
-                is CreateProductDto.Truck -> Truck(ObjectId(), name, description, price, picture)
+                is CreateProductDto.Skate -> Skate(ObjectId(), trimedName, trimedDescription, price, picture)
+                is CreateProductDto.Deck -> Deck(ObjectId(), trimedName, trimedDescription, price, picture)
+                is CreateProductDto.Wheel -> Wheel(ObjectId(), trimedName, trimedDescription, price, picture)
+                is CreateProductDto.Bearing -> Bearing(ObjectId(), trimedName, trimedDescription, price, picture)
+                is CreateProductDto.GridTape -> GridTape(ObjectId(), trimedName, trimedDescription, price, picture)
+                is CreateProductDto.Truck -> Truck(ObjectId(), trimedName, trimedDescription, price, picture)
             }
         }
 
