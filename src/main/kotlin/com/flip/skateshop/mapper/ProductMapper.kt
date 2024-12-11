@@ -2,6 +2,7 @@ package com.flip.skateshop.mapper
 
 import com.flip.skateshop.domain.Product
 import com.flip.skateshop.domain.Product.*
+import com.flip.skateshop.domain.ProductType
 import com.flip.skateshop.web.rest.dto.CreateProductDto
 import com.flip.skateshop.web.rest.dto.ProductDto
 import org.bson.types.ObjectId
@@ -11,6 +12,16 @@ import org.springframework.stereotype.Component
 class ProductMapper(
     private val fileMapper: FileMapper,
 ) {
+    fun toProductType(product: Product): ProductType =
+        when (product) {
+            is Skate -> ProductType.SKATE
+            is Deck -> ProductType.DECK
+            is Wheel -> ProductType.WHEEL
+            is Bearing -> ProductType.BEARING
+            is GridTape -> ProductType.GRID_TAPE
+            is Truck -> ProductType.TRUCK
+        }
+
     fun toProduct(
         productId: ObjectId,
         productDto: CreateProductDto,

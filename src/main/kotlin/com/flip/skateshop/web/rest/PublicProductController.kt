@@ -2,6 +2,7 @@ package com.flip.skateshop.web.rest
 
 import com.flip.skateshop.domain.ProductType
 import com.flip.skateshop.service.ProductService
+import com.flip.skateshop.web.rest.dto.ProductDto
 import com.flip.skateshop.web.rest.dto.ProductPaginationDto
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.responses.ApiResponse
@@ -37,4 +38,14 @@ class PublicProductController(
             maxPrice = maxPrice,
             search = search,
         )
+
+    @GetMapping("/{productId}")
+    @Operation(summary = "Get a specific product by id")
+    @ApiResponses(
+        ApiResponse(responseCode = "200"),
+        ApiResponse(responseCode = "404", description = "Product not found"),
+    )
+    suspend fun getProduct(
+        @PathVariable productId: ObjectId,
+    ): ProductDto = productService.getProduct(productId)
 }

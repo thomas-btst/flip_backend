@@ -25,17 +25,22 @@ class ProductServiceTest
         private val fileService = mockk<FileService>(relaxed = true)
         private val productService = ProductService(productRepository, productMapper, fileService)
 
+        suspend fun createProduct(): Product {
+            val product =
+                Product.Skate(
+                    ObjectId(),
+                    "Name",
+                    "Description",
+                    8,
+                    "",
+                )
+            productRepository.repository.save(product)
+            return product
+        }
+
         suspend fun createProducts(number: Int) {
             for (i in 1..number) {
-                val product =
-                    Product.Skate(
-                        ObjectId(),
-                        "Name",
-                        "Description",
-                        8,
-                        "",
-                    )
-                productRepository.repository.save(product)
+                createProduct()
             }
         }
 
@@ -219,5 +224,18 @@ class ProductServiceTest
                 assertEquals(2, findNameSkate.products.size)
                 assertEquals(0, findBadName.products.size)
                 assertEquals(1, findByPrice.products.size)
+            }
+
+        @Test
+        fun `should retrieve a product correctly`() =
+            runTest {
+                val product = createProduct()
+                val productDto = productService.getProduct(product._id)
+                product.run {
+                    assertEquals(name, productDto.name)
+                    assertEquals(description, productDto.description)
+                    assertEquals(price, productDto.price)
+                    assertEquals(productMapper.toProductType(product), productDto.type)
+                }
             }
     }

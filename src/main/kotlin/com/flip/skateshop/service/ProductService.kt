@@ -4,10 +4,13 @@ import com.flip.skateshop.domain.ProductType
 import com.flip.skateshop.mapper.ProductMapper
 import com.flip.skateshop.repository.ProductRepositoryWrapper
 import com.flip.skateshop.web.rest.dto.CreateProductDto
+import com.flip.skateshop.web.rest.dto.ProductDto
 import com.flip.skateshop.web.rest.dto.ProductPaginationDto
 import org.bson.types.ObjectId
+import org.springframework.http.HttpStatus
 import org.springframework.http.codec.multipart.FilePart
 import org.springframework.stereotype.Service
+import org.springframework.web.server.ResponseStatusException
 
 @Service
 class ProductService(
@@ -15,6 +18,13 @@ class ProductService(
     private val productMapper: ProductMapper,
     private val fileService: FileService,
 ) {
+    suspend fun getProduct(productId: ObjectId): ProductDto {
+        val product =
+            productRepository.repository.findById(productId)
+                ?: throw ResponseStatusException(HttpStatus.NOT_FOUND, "Product with id $productId does not exist")
+        return productMapper.toProductDto(product)
+    }
+
     suspend fun getProducts(
         limit: Int,
         pagination: ObjectId?,
