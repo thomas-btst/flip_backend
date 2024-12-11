@@ -3,8 +3,8 @@ package com.flip.skateshop.seeder
 import com.flip.skateshop.config.Seeder
 import com.flip.skateshop.domain.Product
 import com.flip.skateshop.domain.ProductType
-import com.flip.skateshop.repository.ProductRepository
-import com.flip.skateshop.service.FileService
+import com.flip.skateshop.interfaces.repository.ProductRepositoryInterface
+import com.flip.skateshop.interfaces.service.FileServiceInterface
 import kotlinx.coroutines.runBlocking
 import org.bson.types.ObjectId
 import org.springframework.core.io.ClassPathResource
@@ -15,8 +15,8 @@ import java.nio.file.Files
 
 @Component
 class ProductSeeder(
-    private val productRepository: ProductRepository,
-    private val fileService: FileService,
+    private val productRepository: ProductRepositoryInterface,
+    private val fileService: FileServiceInterface,
 ) : Seeder("products") {
     fun randomPicture(type: ProductType): File? {
         val pictures = ClassPathResource("seed/product/${type.name.lowercase()}").file.listFiles() ?: return null

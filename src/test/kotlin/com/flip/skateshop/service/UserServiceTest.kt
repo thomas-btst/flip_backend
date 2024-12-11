@@ -5,14 +5,18 @@ import com.flip.skateshop.domain.Address
 import com.flip.skateshop.domain.RoleEnum
 import com.flip.skateshop.domain.User
 import com.flip.skateshop.domain.VerificationKey
+import com.flip.skateshop.interfaces.repository.UserRepositoryInterface
+import com.flip.skateshop.interfaces.service.FileServiceInterface
+import com.flip.skateshop.interfaces.service.MailServiceInterface
 import com.flip.skateshop.mapper.UserMapper
-import com.flip.skateshop.repository.UserRepositoryWrapper
 import com.flip.skateshop.security.JwtClaimer
 import com.flip.skateshop.security.SecurityUtils
 import com.flip.skateshop.util.ServicesCleaner
+import com.flip.skateshop.web.rest.dto.AddressDto
 import com.flip.skateshop.web.rest.dto.LoginDto
 import com.flip.skateshop.web.rest.dto.RegisterDto
 import com.flip.skateshop.web.rest.dto.ResetPasswordDto
+import com.flip.skateshop.web.rest.dto.UpdateUserDto
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
@@ -36,7 +40,7 @@ import kotlin.test.assertNotNull
 class UserServiceTest
     @Autowired
     constructor(
-        private val userRepository: UserRepositoryWrapper,
+        private val userRepository: UserRepositoryInterface,
         private val jwtDecoder: ReactiveJwtDecoder,
         private val jwtClaimer: JwtClaimer,
         private val passwordEncoder: PasswordEncoder,
@@ -45,7 +49,7 @@ class UserServiceTest
         authenticationManager: ReactiveAuthenticationManager,
     ) : ServicesCleaner() {
         private val securityUtils = mockk<SecurityUtils>()
-        private val fileService = mockk<FileService>(relaxed = true)
+        private val fileService = mockk<FileServiceInterface>(relaxed = true)
         private val userService =
             UserService(
                 userRepository,
@@ -53,7 +57,7 @@ class UserServiceTest
                 authenticationManager,
                 jwtClaimer,
                 securityUtils,
-                mockk<MailService>(relaxed = true),
+                mockk<MailServiceInterface>(relaxed = true),
                 passwordEncoder,
                 fileService,
             )
@@ -68,13 +72,13 @@ class UserServiceTest
             activationKey: VerificationKey? = null,
             resetPasswordKey: VerificationKey? = null,
             enabled: Boolean = true,
-        ) = userRepository.repository.save(
+        ) = userRepository.save(
             User(
                 ObjectId(),
                 firstName,
                 lastName,
                 email,
-                "0782713311",
+                "0786713311",
                 Address(
                     "27 rue Flip",
                     "",
@@ -141,7 +145,7 @@ class UserServiceTest
                         "password",
                     )
                 userService.register(registerDto)
-                val user = userRepository.repository.findOneByEmail(registerDto.email)
+                val user = userRepository.findOneByEmail(registerDto.email)
                 assertNotNull(user)
                 registerDto.run {
                     assertEquals(email, user.email)
@@ -245,7 +249,7 @@ class UserServiceTest
                         enabled = false,
                     )
                 userService.sendActivationKey(user.email)
-                userRepository.repository.findById(user._id)?.run {
+                userRepository.findById(user._id)?.run {
                     assertNotNull(activationKey)
                 }
             }
@@ -258,7 +262,7 @@ class UserServiceTest
                         resetPasswordKey = null,
                     )
                 userService.sendResetPasswordKey(user.email)
-                userRepository.repository.findById(user._id)?.run {
+                userRepository.findById(user._id)?.run {
                     assertNotNull(resetPasswordKey)
                 }
             }
@@ -277,7 +281,7 @@ class UserServiceTest
                         enabled = false,
                     )
                 userService.activate(user.email, activationKey)
-                assert(userRepository.repository.findById(user._id)?.enabled ?: false)
+                assert(userRepository.findById(user._id)?.enabled ?: false)
             }
 
         @Test
@@ -296,7 +300,7 @@ class UserServiceTest
                     userService.activate(user.email, "012345")
                 }.run { assertEquals(HttpStatus.FORBIDDEN, statusCode) }
                 assert(
-                    userRepository.repository
+                    userRepository
                         .findById(user._id)
                         ?.enabled
                         ?.not() ?: false,
@@ -320,7 +324,7 @@ class UserServiceTest
                     userService.activate(user.email, activationKey)
                 }.run { assertEquals(HttpStatus.FORBIDDEN, statusCode) }
                 assert(
-                    userRepository.repository
+                    userRepository
                         .findById(user._id)
                         ?.enabled
                         ?.not() ?: false,
@@ -341,7 +345,7 @@ class UserServiceTest
                     )
                 val newPassword = "newPassword"
                 userService.resetPassword(ResetPasswordDto(user.email, newPassword, verificationKey))
-                val updatedUser = userRepository.repository.findById(user._id)
+                val updatedUser = userRepository.findById(user._id)
                 assert(passwordEncoder.matches(newPassword, updatedUser?.password))
             }
 
@@ -360,7 +364,7 @@ class UserServiceTest
                 assertThrows<ResponseStatusException> {
                     userService.resetPassword(ResetPasswordDto(user.email, newPassword, "123456"))
                 }.run { assertEquals(HttpStatus.FORBIDDEN, statusCode) }
-                val updatedUser = userRepository.repository.findById(user._id)
+                val updatedUser = userRepository.findById(user._id)
                 assert(!passwordEncoder.matches(newPassword, updatedUser?.password))
             }
 
@@ -380,8 +384,42 @@ class UserServiceTest
                 assertThrows<ResponseStatusException> {
                     userService.resetPassword(ResetPasswordDto(user.email, newPassword, verificationKey))
                 }.run { assertEquals(HttpStatus.FORBIDDEN, statusCode) }
-                val updatedUser = userRepository.repository.findById(user._id)
+                val updatedUser = userRepository.findById(user._id)
                 assert(!passwordEncoder.matches(newPassword, updatedUser?.password))
+            }
+
+        @Test
+        fun `should update profile successfully`() =
+            runTest {
+                val user = createUser()
+                val updateUserDto =
+                    UpdateUserDto(
+                        "Georges",
+                        "DUPONT",
+                        "06892901",
+                        AddressDto(
+                            "30 rue des olivier",
+                            "10",
+                            "10000",
+                            "Paris",
+                        ),
+                    )
+                coEvery { securityUtils.getCurrentUserId() } returns user._id
+                userService.updateCurrentUserProfile(updateUserDto)
+                val updatedUser = userRepository.findById(user._id)
+                assertNotNull(updatedUser)
+                updateUserDto.run {
+                    assertEquals(firstName, updatedUser.firstName)
+                    assertEquals(lastName, updatedUser.lastName)
+                    assertEquals(phone, updatedUser.phone)
+                    assertNotNull(updatedUser.address)
+                    address.run {
+                        assertEquals(line1, updatedUser.address.line1)
+                        assertEquals(line2, updatedUser.address.line2)
+                        assertEquals(zipCode, updatedUser.address.zipCode)
+                        assertEquals(city, updatedUser.address.city)
+                    }
+                }
             }
 
         @Test
@@ -393,7 +431,7 @@ class UserServiceTest
 
                 userService.updateCurrentUserLogo(logo)
 
-                val updatedUser = userRepository.repository.findById(user._id)
+                val updatedUser = userRepository.findById(user._id)
                 coVerify { fileService.putUserLogo(user._id, logo) }
                 assertNotNull(updatedUser?.logo)
             }

@@ -1,5 +1,6 @@
 package com.flip.skateshop.service
 
+import com.flip.skateshop.interfaces.service.FileServiceInterface
 import com.flip.skateshop.mapper.FileMapper
 import com.flip.skateshop.util.ServicesCleaner
 import kotlinx.coroutines.test.runTest
@@ -12,7 +13,7 @@ import java.net.URL
 import javax.imageio.ImageIO
 
 class FileServiceTest(
-    @Autowired private val fileService: FileService,
+    @Autowired private val fileService: FileServiceInterface,
     @Autowired private val fileMapper: FileMapper,
 ) : ServicesCleaner() {
     @Test

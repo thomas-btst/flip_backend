@@ -1,10 +1,10 @@
 package com.flip.skateshop.mapper
 
 import com.flip.skateshop.config.SkateshopProperties
-import com.flip.skateshop.domain.Address
 import com.flip.skateshop.domain.User
 import com.flip.skateshop.domain.VerificationKey
 import com.flip.skateshop.extention.normalizedEmail
+import com.flip.skateshop.web.rest.dto.AddressDto
 import com.flip.skateshop.web.rest.dto.RegisterDto
 import com.flip.skateshop.web.rest.dto.UpdateUserDto
 import com.flip.skateshop.web.rest.dto.UserDto
@@ -43,7 +43,22 @@ class UserMapper(
 
     fun toUserDto(user: User): UserDto =
         user.run {
-            UserDto(_id.toHexString(), firstName, lastName, email, phone, address, logo?.let(fileMapper::toPublicPath))
+            UserDto(
+                _id.toHexString(),
+                firstName,
+                lastName,
+                email,
+                phone,
+                address?.run {
+                    AddressDto(
+                        line1,
+                        line2,
+                        zipCode,
+                        city,
+                    )
+                },
+                logo?.let(fileMapper::toPublicPath),
+            )
         }
 
     fun toValidUpdateUserDto(userDto: UpdateUserDto): UpdateUserDto =
@@ -52,7 +67,7 @@ class UserMapper(
                 firstName.trim(),
                 lastName.trim(),
                 phone,
-                Address(
+                AddressDto(
                     address.line1.trim(),
                     address.line2.trim(),
                     address.zipCode,

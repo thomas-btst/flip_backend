@@ -1,6 +1,7 @@
 package com.flip.skateshop.service
 
 import com.flip.skateshop.config.SpringProperties
+import com.flip.skateshop.interfaces.service.MailServiceInterface
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import org.springframework.mail.javamail.JavaMailSender
@@ -15,7 +16,7 @@ class MailService(
     private val scope: CoroutineScope,
     private val templateEngine: TemplateEngine,
     springProperties: SpringProperties,
-) {
+) : MailServiceInterface {
     private val mailProperties = springProperties.mail
 
     companion object {
@@ -34,7 +35,7 @@ class MailService(
         setVariable("verificationKey", verificationKey.toList())
     }
 
-    suspend fun sendMail(
+    private suspend fun sendMail(
         to: String,
         subject: String,
         body: String,
@@ -50,7 +51,7 @@ class MailService(
         }
     }
 
-    suspend fun sendActivationKey(
+    override suspend fun sendActivationKey(
         email: String,
         firstName: String,
         lastName: String,
@@ -67,7 +68,7 @@ class MailService(
         )
     }
 
-    suspend fun sendResetPasswordKey(
+    override suspend fun sendResetPasswordKey(
         email: String,
         firstName: String,
         lastName: String,

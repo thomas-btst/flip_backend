@@ -1,10 +1,8 @@
 package com.flip.skateshop.domain
 
-import jakarta.validation.constraints.NotBlank
 import org.bson.types.ObjectId
 import org.springframework.data.annotation.Id
 import org.springframework.data.mongodb.core.mapping.Document
-import validator.ZipCodeFormat
 import java.time.Instant
 
 @Document(User.DOCUMENT_NAME)
@@ -38,11 +36,8 @@ class VerificationKey(
 )
 
 class Address(
-    @field:NotBlank
     val line1: String,
     val line2: String,
-    @field:ZipCodeFormat
     val zipCode: String,
-    @field:NotBlank
     val city: String,
 )

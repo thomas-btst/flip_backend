@@ -3,8 +3,8 @@ package com.flip.skateshop
 import com.flip.skateshop.annotation.SeederAnnotation
 import com.flip.skateshop.config.Seeder
 import com.flip.skateshop.config.SeederConfig
-import com.flip.skateshop.repository.ProductRepository
-import com.flip.skateshop.repository.UserRepository
+import com.flip.skateshop.interfaces.repository.ProductRepositoryInterface
+import com.flip.skateshop.interfaces.repository.UserRepositoryInterface
 import com.flip.skateshop.seeder.ProductSeeder
 import com.flip.skateshop.seeder.UserSeeder
 import com.flip.skateshop.util.ServicesCleaner
@@ -23,8 +23,8 @@ class SeederTest
     constructor(
         private val userSeeder: UserSeeder,
         private val productSeeder: ProductSeeder,
-        private val userRepository: UserRepository,
-        private val productRepository: ProductRepository,
+        private val userRepository: UserRepositoryInterface,
+        private val productRepository: ProductRepositoryInterface,
     ) : ServicesCleaner() {
         private val applicationContext = mockk<ApplicationContext>(relaxed = true)
 

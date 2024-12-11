@@ -1,7 +1,7 @@
 package com.flip.skateshop.web.rest
 
 import com.flip.skateshop.domain.ProductType
-import com.flip.skateshop.service.ProductService
+import com.flip.skateshop.interfaces.service.ProductServiceInterface
 import com.flip.skateshop.web.rest.dto.ProductDto
 import com.flip.skateshop.web.rest.dto.ProductPaginationDto
 import io.swagger.v3.oas.annotations.Operation
@@ -17,7 +17,7 @@ import org.springframework.web.bind.annotation.RestController
 @RestController
 @RequestMapping("/public/products")
 class PublicProductController(
-    private val productService: ProductService,
+    private val productService: ProductServiceInterface,
 ) {
     @GetMapping("/limit/{limit}")
     @Operation(summary = "Retrieve a paginated list of products with optional filters")

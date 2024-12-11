@@ -2,6 +2,7 @@ package com.flip.skateshop.repository
 
 import com.flip.skateshop.domain.Product
 import com.flip.skateshop.domain.ProductType
+import com.flip.skateshop.interfaces.repository.ProductRepositoryInterface
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.reactive.asFlow
 import org.bson.types.ObjectId
@@ -15,14 +16,20 @@ import org.springframework.data.repository.kotlin.CoroutineCrudRepository
 import org.springframework.stereotype.Repository
 
 @Repository
-interface ProductRepository : CoroutineCrudRepository<Product, ObjectId>
+interface ProductCRUDRepository : CoroutineCrudRepository<Product, ObjectId>
 
 @Repository
-class ProductRepositoryWrapper(
-    val repository: ProductRepository,
+class ProductRepository(
+    private val repository: ProductCRUDRepository,
     private val mongoTemplate: ReactiveMongoTemplate,
-) {
-    suspend fun findByFilterPaginated(
+) : ProductRepositoryInterface {
+    override suspend fun save(product: Product): Product = repository.save(product)
+
+    override suspend fun count(): Long = repository.count()
+
+    override suspend fun findById(id: ObjectId): Product? = repository.findById(id)
+
+    override suspend fun findByFilterPaginated(
         limit: Int,
         pagination: ObjectId?,
         types: Set<ProductType>,

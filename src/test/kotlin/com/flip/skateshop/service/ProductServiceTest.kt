@@ -2,8 +2,9 @@ package com.flip.skateshop.service
 
 import com.flip.skateshop.domain.Product
 import com.flip.skateshop.domain.ProductType
+import com.flip.skateshop.interfaces.repository.ProductRepositoryInterface
+import com.flip.skateshop.interfaces.service.FileServiceInterface
 import com.flip.skateshop.mapper.ProductMapper
-import com.flip.skateshop.repository.ProductRepositoryWrapper
 import com.flip.skateshop.util.ServicesCleaner
 import com.flip.skateshop.web.rest.dto.CreateProductDto
 import io.mockk.coVerify
@@ -19,10 +20,10 @@ import kotlin.test.assertNotNull
 class ProductServiceTest
     @Autowired
     constructor(
-        private val productRepository: ProductRepositoryWrapper,
+        private val productRepository: ProductRepositoryInterface,
         private val productMapper: ProductMapper,
     ) : ServicesCleaner() {
-        private val fileService = mockk<FileService>(relaxed = true)
+        private val fileService = mockk<FileServiceInterface>(relaxed = true)
         private val productService = ProductService(productRepository, productMapper, fileService)
 
         suspend fun createProduct(): Product {
@@ -34,7 +35,7 @@ class ProductServiceTest
                     8,
                     "",
                 )
-            productRepository.repository.save(product)
+            productRepository.save(product)
             return product
         }
 
@@ -55,7 +56,7 @@ class ProductServiceTest
                         file,
                     )
                 coVerify { fileService.putProductPicture(any(), file) }
-                val product = productRepository.repository.findById(productId)
+                val product = productRepository.findById(productId)
                 assertNotNull(product)
                 assertNotNull(product.picture)
                 productMapper
@@ -138,14 +139,14 @@ class ProductServiceTest
 
                 assertEquals(limit, firstPagination.products.size)
                 assertEquals(productsNumber - limit, secondPagination.products.size)
-                assertEquals(firstPagination.hasMore, true)
+                assert(firstPagination.hasMore)
                 assertEquals(secondPagination.hasMore, false)
             }
 
         @Test
         fun `should filter products correctly`() =
             runTest {
-                productRepository.repository.save(
+                productRepository.save(
                     Product.Skate(
                         ObjectId(),
                         "Skate 1",
@@ -154,7 +155,7 @@ class ProductServiceTest
                         "",
                     ),
                 )
-                productRepository.repository.save(
+                productRepository.save(
                     Product.Skate(
                         ObjectId(),
                         "Skate 2",
@@ -163,7 +164,7 @@ class ProductServiceTest
                         "",
                     ),
                 )
-                productRepository.repository.save(
+                productRepository.save(
                     Product.Wheel(
                         ObjectId(),
                         "Wheel 1",

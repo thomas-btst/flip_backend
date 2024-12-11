@@ -3,6 +3,7 @@ package com.flip.skateshop.service
 import com.flip.skateshop.config.MinioConfig.Companion.PUBLIC_ROOT
 import com.flip.skateshop.config.SkateshopProperties
 import com.flip.skateshop.extention.toByteArray
+import com.flip.skateshop.interfaces.service.FileServiceInterface
 import io.minio.MinioAsyncClient
 import io.minio.ObjectWriteResponse
 import io.minio.PutObjectArgs
@@ -16,7 +17,7 @@ import java.io.ByteArrayInputStream
 class FileService(
     private val minioClient: MinioAsyncClient,
     skateshopProperties: SkateshopProperties,
-) {
+) : FileServiceInterface {
     private val properties = skateshopProperties.minio
 
     companion object {
@@ -26,12 +27,12 @@ class FileService(
         const val USER_LOGO_PREFIX = "$PUBLIC_ROOT/$USER_ROOT/%s/logos"
     }
 
-    suspend fun putUserLogo(
+    override suspend fun putUserLogo(
         userId: ObjectId,
         file: FilePart,
     ): String = putUserLogo(userId, file.name(), file.toByteArray(), file.headers().contentType.toString())
 
-    suspend fun putUserLogo(
+    override suspend fun putUserLogo(
         userId: ObjectId,
         filename: String,
         data: ByteArray,
@@ -42,12 +43,12 @@ class FileService(
         return key
     }
 
-    suspend fun putProductPicture(
+    override suspend fun putProductPicture(
         productId: ObjectId,
         file: FilePart,
     ): String = putProductPicture(productId, file.name(), file.toByteArray(), file.headers().contentType.toString())
 
-    suspend fun putProductPicture(
+    override suspend fun putProductPicture(
         productId: ObjectId,
         filename: String,
         data: ByteArray,

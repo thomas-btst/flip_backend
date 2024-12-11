@@ -3,8 +3,11 @@ package com.flip.skateshop.service
 import com.flip.skateshop.domain.RoleEnum
 import com.flip.skateshop.domain.User
 import com.flip.skateshop.extention.normalizedEmail
+import com.flip.skateshop.interfaces.repository.UserRepositoryInterface
+import com.flip.skateshop.interfaces.service.FileServiceInterface
+import com.flip.skateshop.interfaces.service.MailServiceInterface
+import com.flip.skateshop.interfaces.service.UserServiceInterface
 import com.flip.skateshop.mapper.UserMapper
-import com.flip.skateshop.repository.UserRepositoryWrapper
 import com.flip.skateshop.security.DomainUserDetails
 import com.flip.skateshop.security.JwtClaimer
 import com.flip.skateshop.security.SecurityUtils
@@ -26,34 +29,34 @@ import org.springframework.web.server.ResponseStatusException
 
 @Service
 class UserService(
-    private val userRepository: UserRepositoryWrapper,
+    private val userRepository: UserRepositoryInterface,
     private val userMapper: UserMapper,
     private val authenticationManager: ReactiveAuthenticationManager,
     private val jwtClaimer: JwtClaimer,
     private val securityUtils: SecurityUtils,
-    private val mailService: MailService,
+    private val mailService: MailServiceInterface,
     private val passwordEncoder: PasswordEncoder,
-    private val fileService: FileService,
-) {
-    suspend fun getCurrentUser(): User {
+    private val fileService: FileServiceInterface,
+) : UserServiceInterface {
+    override suspend fun getCurrentUser(): User {
         val currentUserId = securityUtils.getCurrentUserId()
-        return userRepository.repository.findById(currentUserId)!!
+        return userRepository.findById(currentUserId)!!
     }
 
-    suspend fun updateCurrentUserProfile(userDto: UpdateUserDto) {
+    override suspend fun updateCurrentUserProfile(userDto: UpdateUserDto) {
         userRepository.updateUserProfile(
             securityUtils.getCurrentUserId(),
             userMapper.toValidUpdateUserDto(userDto),
         )
     }
 
-    suspend fun updateCurrentUserLogo(logo: FilePart) {
+    override suspend fun updateCurrentUserLogo(logo: FilePart) {
         val userId = securityUtils.getCurrentUserId()
         val path = fileService.putUserLogo(userId, logo)
         userRepository.updateUserLogo(userId, path)
     }
 
-    fun createToken(
+    override fun createToken(
         userId: ObjectId,
         authorities: List<RoleEnum>,
     ): TokenDto {
@@ -61,7 +64,7 @@ class UserService(
         return TokenDto(token, authorities)
     }
 
-    suspend fun login(loginDto: LoginDto): TokenDto {
+    override suspend fun login(loginDto: LoginDto): TokenDto {
         val normalizedEmail = loginDto.email.normalizedEmail()
         val authentication =
             authenticationManager
@@ -76,23 +79,23 @@ class UserService(
         return createToken(principal.id, authentication.authorities.map { RoleEnum.valueOf(it.toString()) })
     }
 
-    suspend fun register(registerDto: RegisterDto) {
-        if (userRepository.repository.findOneByEmail(registerDto.email) != null) {
+    override suspend fun register(registerDto: RegisterDto) {
+        if (userRepository.findOneByEmail(registerDto.email) != null) {
             throw ResponseStatusException(HttpStatus.CONFLICT, "Email is already used.")
         }
         val activationKey = randomString(6)
-        val user = userRepository.repository.save(userMapper.toUser(registerDto, activationKey))
+        val user = userRepository.save(userMapper.toUser(registerDto, activationKey))
         mailService.sendActivationKey(user.email, user.firstName, user.lastName, activationKey)
     }
 
-    suspend fun sendActivationKey(email: String) {
+    override suspend fun sendActivationKey(email: String) {
         val normalizedEmail = email.normalizedEmail()
         val activationKey = randomString(6)
         val user = userRepository.updateActivationKey(normalizedEmail, activationKey) ?: return
         mailService.sendActivationKey(user.email, user.firstName, user.lastName, activationKey)
     }
 
-    suspend fun activate(
+    override suspend fun activate(
         email: String,
         activationKey: String,
     ): TokenDto {
@@ -104,14 +107,14 @@ class UserService(
         return createToken(user._id, user.roles.toList())
     }
 
-    suspend fun sendResetPasswordKey(email: String) {
+    override suspend fun sendResetPasswordKey(email: String) {
         val normalizedEmail = email.normalizedEmail()
         val resetPasswordKey = randomString(6)
         val user = userRepository.updateResetPasswordKey(normalizedEmail, resetPasswordKey) ?: return
         mailService.sendResetPasswordKey(user.email, user.firstName, user.lastName, resetPasswordKey)
     }
 
-    suspend fun resetPassword(reset: ResetPasswordDto): TokenDto {
+    override suspend fun resetPassword(reset: ResetPasswordDto): TokenDto {
         val normalizedEmail = reset.email.normalizedEmail()
         val user =
             userRepository.updatePasswordAndActivateWithKey(

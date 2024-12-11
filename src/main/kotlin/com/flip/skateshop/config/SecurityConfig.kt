@@ -2,7 +2,7 @@ package com.flip.skateshop.config
 
 import com.flip.skateshop.domain.RoleEnum
 import com.flip.skateshop.domain.RoleEnum.ADMIN
-import com.flip.skateshop.repository.UserRepository
+import com.flip.skateshop.interfaces.repository.UserRepositoryInterface
 import com.flip.skateshop.security.JwtClaimer
 import com.nimbusds.jose.jwk.JWKSet
 import com.nimbusds.jose.jwk.OctetSequenceKey
@@ -50,7 +50,7 @@ class SecurityConfig(
     fun springSecurityFilterChain(
         http: ServerHttpSecurity,
         jwtClaimer: JwtClaimer,
-        userRepository: UserRepository,
+        userRepository: UserRepositoryInterface,
     ): SecurityWebFilterChain =
         http {
             securityMatcher(pathMatchers("/**"))

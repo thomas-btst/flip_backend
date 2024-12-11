@@ -1,6 +1,6 @@
 package com.flip.skateshop.web.rest
 
-import com.flip.skateshop.service.ProductService
+import com.flip.skateshop.interfaces.service.ProductServiceInterface
 import com.flip.skateshop.web.rest.dto.CreateProductDto
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.responses.ApiResponse
@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.RestController
 @RestController
 @RequestMapping("/products")
 class ProductController(
-    private val productService: ProductService,
+    private val productService: ProductServiceInterface,
 ) {
     @PostMapping(consumes = [MediaType.MULTIPART_FORM_DATA_VALUE])
     @Operation(summary = "Add a new product")

@@ -3,14 +3,14 @@ package com.flip.skateshop.seeder
 import com.flip.skateshop.config.Seeder
 import com.flip.skateshop.domain.RoleEnum
 import com.flip.skateshop.domain.User
-import com.flip.skateshop.repository.UserRepository
+import com.flip.skateshop.interfaces.repository.UserRepositoryInterface
 import kotlinx.coroutines.runBlocking
 import org.bson.types.ObjectId
 import org.springframework.stereotype.Component
 
 @Component
 class UserSeeder(
-    private val userRepository: UserRepository,
+    private val userRepository: UserRepositoryInterface,
 ) : Seeder("users") {
     companion object {
         const val ADMIN_EMAIL = "admin@flip.fr"

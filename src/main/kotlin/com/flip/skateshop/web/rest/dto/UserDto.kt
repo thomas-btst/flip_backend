@@ -1,9 +1,19 @@
 package com.flip.skateshop.web.rest.dto
 
-import com.flip.skateshop.domain.Address
 import jakarta.validation.Valid
 import jakarta.validation.constraints.NotBlank
 import validator.PhoneFormat
+import validator.ZipCodeFormat
+
+class AddressDto(
+    @field:NotBlank
+    val line1: String,
+    val line2: String,
+    @field:ZipCodeFormat
+    val zipCode: String,
+    @field:NotBlank
+    val city: String,
+)
 
 class UserDto(
     val id: String,
@@ -11,7 +21,7 @@ class UserDto(
     val lastName: String,
     val email: String,
     val phone: String?,
-    val address: Address?,
+    val address: AddressDto?,
     val logo: String?,
 )
 
@@ -23,5 +33,5 @@ class UpdateUserDto(
     @field:PhoneFormat
     val phone: String,
     @field:Valid
-    val address: Address,
+    val address: AddressDto,
 )

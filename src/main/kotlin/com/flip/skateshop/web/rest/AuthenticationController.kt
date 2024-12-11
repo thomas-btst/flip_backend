@@ -1,6 +1,6 @@
 package com.flip.skateshop.web.rest
 
-import com.flip.skateshop.service.UserService
+import com.flip.skateshop.interfaces.service.UserServiceInterface
 import com.flip.skateshop.web.rest.dto.ActivationDto
 import com.flip.skateshop.web.rest.dto.LoginDto
 import com.flip.skateshop.web.rest.dto.RegisterDto
@@ -22,7 +22,7 @@ import org.springframework.web.bind.annotation.RestController
 @RestController
 @RequestMapping("/auth")
 class AuthenticationController(
-    private val userService: UserService,
+    private val userService: UserServiceInterface,
 ) {
     @PostMapping("/login")
     @Operation(summary = "Authenticate an user and retrieve a token")

@@ -3,6 +3,7 @@ package com.flip.skateshop.repository
 import com.flip.skateshop.config.SkateshopProperties
 import com.flip.skateshop.domain.User
 import com.flip.skateshop.domain.VerificationKey
+import com.flip.skateshop.interfaces.repository.UserRepositoryInterface
 import com.flip.skateshop.web.rest.dto.UpdateUserDto
 import kotlinx.coroutines.reactive.awaitFirst
 import kotlinx.coroutines.reactor.awaitSingleOrNull
@@ -21,16 +22,16 @@ import org.springframework.stereotype.Repository
 import java.time.Instant
 
 @Repository
-interface UserRepository : CoroutineCrudRepository<User, ObjectId> {
+interface UserCRUDRepository : CoroutineCrudRepository<User, ObjectId> {
     suspend fun findOneByEmail(email: String): User?
 }
 
 @Repository
-class UserRepositoryWrapper(
-    val repository: UserRepository,
+class UserRepository(
+    private val repository: UserCRUDRepository,
     private val mongoTemplate: ReactiveMongoTemplate,
     skateshopProperties: SkateshopProperties,
-) {
+) : UserRepositoryInterface {
     private val verificationKeyValidity = skateshopProperties.security.verificationKey.validityInSeconds
 
     private fun keyExpiration() = Instant.now().plusSeconds(verificationKeyValidity)
@@ -40,7 +41,15 @@ class UserRepositoryWrapper(
         update: Update,
     ) = findAndModify(query, update, User::class.java).awaitSingleOrNull()
 
-    suspend fun updateResetPasswordKey(
+    override suspend fun save(user: User): User = repository.save(user)
+
+    override suspend fun count(): Long = repository.count()
+
+    override suspend fun findById(id: ObjectId): User? = repository.findById(id)
+
+    override suspend fun findOneByEmail(email: String): User? = repository.findOneByEmail(email)
+
+    override suspend fun updateResetPasswordKey(
         email: String,
         key: String,
     ): User? {
@@ -53,7 +62,7 @@ class UserRepositoryWrapper(
         return mongoTemplate.findAndModify(query, update)
     }
 
-    suspend fun updateActivationKey(
+    override suspend fun updateActivationKey(
         email: String,
         key: String,
     ): User? {
@@ -70,14 +79,14 @@ class UserRepositoryWrapper(
         return mongoTemplate.findAndModify(query, update)
     }
 
-    suspend fun activateAccountWithKey(
+    override suspend fun activateAccountWithKey(
         email: String,
-        activationKey: String,
+        key: String,
     ): User? {
         val query =
             Query().apply {
                 addCriteria(User::email isEqualTo email)
-                addCriteria(Criteria.where((User::activationKey / VerificationKey::key).toDotPath()).`is`(activationKey))
+                addCriteria(Criteria.where((User::activationKey / VerificationKey::key).toDotPath()).`is`(key))
                 addCriteria(
                     Criteria.where((User::activationKey / VerificationKey::expiration).toDotPath()).gt(Instant.now()),
                 )
@@ -90,16 +99,16 @@ class UserRepositoryWrapper(
         return mongoTemplate.findAndModify(query, update)
     }
 
-    suspend fun updatePasswordAndActivateWithKey(
+    override suspend fun updatePasswordAndActivateWithKey(
         email: String,
-        resetPasswordKey: String,
+        key: String,
         newPassword: String,
     ): User? {
         val query =
             Query().apply {
                 addCriteria(User::email isEqualTo email)
                 addCriteria(
-                    Criteria.where((User::resetPasswordKey / VerificationKey::key).toDotPath()).`is`(resetPasswordKey),
+                    Criteria.where((User::resetPasswordKey / VerificationKey::key).toDotPath()).`is`(key),
                 )
                 addCriteria(
                     Criteria.where((User::resetPasswordKey / VerificationKey::expiration).toDotPath()).gt(Instant.now()),
@@ -114,7 +123,7 @@ class UserRepositoryWrapper(
         return mongoTemplate.findAndModify(query, update)
     }
 
-    suspend fun updateUserProfile(
+    override suspend fun updateUserProfile(
         userId: ObjectId,
         userDto: UpdateUserDto,
     ) {
@@ -129,7 +138,7 @@ class UserRepositoryWrapper(
         mongoTemplate.updateFirst(query, update, User::class.java).awaitFirst()
     }
 
-    suspend fun updateUserLogo(
+    override suspend fun updateUserLogo(
         userId: ObjectId,
         logo: String,
     ) {

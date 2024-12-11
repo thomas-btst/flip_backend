@@ -1,7 +1,7 @@
 package com.flip.skateshop.web.rest
 
+import com.flip.skateshop.interfaces.service.UserServiceInterface
 import com.flip.skateshop.mapper.UserMapper
-import com.flip.skateshop.service.UserService
 import com.flip.skateshop.web.rest.dto.UpdateUserDto
 import com.flip.skateshop.web.rest.dto.UserDto
 import io.swagger.v3.oas.annotations.Operation
@@ -20,7 +20,7 @@ import org.springframework.web.bind.annotation.RestController
 @RestController
 @RequestMapping("/users")
 class UserController(
-    val userService: UserService,
+    private val userService: UserServiceInterface,
     private val userMapper: UserMapper,
 ) {
     @GetMapping
