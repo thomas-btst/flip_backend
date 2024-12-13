@@ -6,10 +6,12 @@ import com.flip.skateshop.util.ServicesCleaner
 import kotlinx.coroutines.test.runTest
 import org.bson.types.ObjectId
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.core.io.ClassPathResource
 import org.springframework.http.MediaType
 import java.net.URL
+import javax.imageio.IIOException
 import javax.imageio.ImageIO
 
 class FileServiceTest(
@@ -32,5 +34,17 @@ class FileServiceTest(
             val picture = ClassPathResource("picture/logo.jpeg").file.readBytes()
             val key = fileService.putUserLogo(userId, "picture", picture, MediaType.IMAGE_JPEG.toString())
             ImageIO.read(URL(fileMapper.toPublicPath(key)))
+        }
+
+    @Test
+    fun `should delete a file successfully`() =
+        runTest {
+            val userId = ObjectId()
+            val picture = ClassPathResource("picture/logo.jpeg").file.readBytes()
+            val key = fileService.putProductPicture(userId, "picture", picture, MediaType.IMAGE_JPEG.toString())
+            fileService.deleteFile(key)
+            assertThrows<IIOException> {
+                ImageIO.read(URL(fileMapper.toPublicPath(key)))
+            }
         }
 }

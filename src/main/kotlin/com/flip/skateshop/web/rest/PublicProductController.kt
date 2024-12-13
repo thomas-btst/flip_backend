@@ -3,6 +3,7 @@ package com.flip.skateshop.web.rest
 import com.flip.skateshop.domain.ProductType
 import com.flip.skateshop.interfaces.service.ProductServiceInterface
 import com.flip.skateshop.web.rest.dto.ProductDto
+import com.flip.skateshop.web.rest.dto.ProductPageDto
 import com.flip.skateshop.web.rest.dto.ProductPaginationDto
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.responses.ApiResponse
@@ -19,6 +20,16 @@ import org.springframework.web.bind.annotation.RestController
 class PublicProductController(
     private val productService: ProductServiceInterface,
 ) {
+    @GetMapping("/limit/{limit}/page/{page}")
+    @Operation(summary = "Retrieve a pagination of products by name and type")
+    @ApiResponses(ApiResponse(responseCode = "200"))
+    suspend fun getProductsByPage(
+        @PathVariable limit: Int,
+        @PathVariable page: Long,
+        @RequestParam search: String = "",
+        @RequestParam type: ProductType?,
+    ): ProductPageDto = productService.getProductsByPage(limit, page, search, type)
+
     @GetMapping("/limit/{limit}")
     @Operation(summary = "Retrieve a paginated list of products with optional filters")
     @ApiResponses(ApiResponse(responseCode = "200"))

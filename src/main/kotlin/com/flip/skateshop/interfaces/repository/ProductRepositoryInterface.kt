@@ -2,14 +2,36 @@ package com.flip.skateshop.interfaces.repository
 
 import com.flip.skateshop.domain.Product
 import com.flip.skateshop.domain.ProductType
+import com.flip.skateshop.web.rest.dto.UpdateProductDto
+import com.mongodb.client.result.UpdateResult
+import kotlinx.coroutines.flow.Flow
 import org.bson.types.ObjectId
 
 interface ProductRepositoryInterface {
     suspend fun save(product: Product): Product
 
+    suspend fun updateProduct(
+        productId: ObjectId,
+        productDto: UpdateProductDto,
+    ): UpdateResult
+
+    suspend fun updateProductPicture(
+        productId: ObjectId,
+        picture: String,
+    ): UpdateResult
+
+    suspend fun deleteById(productId: ObjectId)
+
     suspend fun count(): Long
 
     suspend fun findById(id: ObjectId): Product?
+
+    suspend fun findByNameLikeAndByTypeAndByPage(
+        limit: Int,
+        page: Long,
+        search: String,
+        type: ProductType?,
+    ): Pair<Flow<Product>, Long>
 
     suspend fun findByFilterPaginated(
         limit: Int,

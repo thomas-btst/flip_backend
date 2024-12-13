@@ -7,15 +7,21 @@ import com.flip.skateshop.interfaces.service.FileServiceInterface
 import com.flip.skateshop.mapper.ProductMapper
 import com.flip.skateshop.util.ServicesCleaner
 import com.flip.skateshop.web.rest.dto.CreateProductDto
+import com.flip.skateshop.web.rest.dto.UpdateProductDto
+import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
 import kotlinx.coroutines.test.runTest
 import org.bson.types.ObjectId
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.http.HttpStatus
 import org.springframework.http.codec.multipart.FilePart
+import org.springframework.web.server.ResponseStatusException
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
+import kotlin.test.assertNull
 
 class ProductServiceTest
     @Autowired
@@ -26,14 +32,19 @@ class ProductServiceTest
         private val fileService = mockk<FileServiceInterface>(relaxed = true)
         private val productService = ProductService(productRepository, productMapper, fileService)
 
-        suspend fun createProduct(): Product {
+        suspend fun createProduct(
+            name: String = "Name",
+            description: String = "Description",
+            price: Long = 8,
+            picture: String = "/path/to/file",
+        ): Product {
             val product =
                 Product.Skate(
                     ObjectId(),
-                    "Name",
-                    "Description",
-                    8,
-                    "",
+                    name,
+                    description,
+                    price,
+                    picture,
                 )
             productRepository.save(product)
             return product
@@ -109,6 +120,71 @@ class ProductServiceTest
                         .toList()
                         .size,
                 )
+            }
+
+        @Test
+        fun `should delete a product correctly`() =
+            runTest {
+                val product = createProduct()
+                productService.deleteProduct(product._id)
+                coVerify { fileService.deleteFile(product.picture) }
+                assertNull(productRepository.findById(product._id))
+            }
+
+        @Test
+        fun `should not delete a product if it does not exists`() =
+            runTest {
+                val exception = assertThrows<ResponseStatusException> { productService.deleteProduct(ObjectId()) }
+                assertEquals(HttpStatus.NOT_FOUND, exception.statusCode)
+            }
+
+        @Test
+        fun `should update a product successfully`() =
+            runTest {
+                val product = createProduct("Name", "Description", 8)
+                productRepository.save(product)
+                val newProduct = UpdateProductDto.Deck("New name", "New description", 3)
+                productService.updateProduct(product._id, newProduct)
+                val updatedProduct = productRepository.findById(product._id)
+                assertNotNull(updatedProduct)
+                newProduct.run {
+                    assertEquals(name, updatedProduct.name)
+                    assertEquals(description, updatedProduct.description)
+                    assertEquals(price, updatedProduct.price)
+                    assert(updatedProduct is Product.Deck)
+                }
+            }
+
+        @Test
+        fun `should update product throw error if product does not exists`() =
+            runTest {
+                assertThrows<ResponseStatusException> {
+                    productService.updateProduct(ObjectId(), UpdateProductDto.Deck(null, null, null))
+                }.let { assertEquals(HttpStatus.NOT_FOUND, it.statusCode) }
+            }
+
+        @Test
+        fun `should update product picture successfully`() =
+            runTest {
+                val product = createProduct(picture = "/path/to/file")
+                productRepository.save(product)
+                val file = mockk<FilePart>()
+                val key = "/new/path/to/file"
+                coEvery { fileService.putProductPicture(product._id, file) } returns key
+                productService.updateProductPicture(product._id, file)
+                coVerify { fileService.deleteFile(product.picture) }
+                coVerify { fileService.putProductPicture(product._id, file) }
+                val updatedProduct = productRepository.findById(product._id)
+                assertNotNull(updatedProduct)
+                assertEquals(key, updatedProduct.picture)
+            }
+
+        @Test
+        fun `should update product picture throw error if product does not exists`() =
+            runTest {
+                assertThrows<ResponseStatusException> {
+                    productService.updateProductPicture(ObjectId(), mockk<FilePart>())
+                }.let { assertEquals(HttpStatus.NOT_FOUND, it.statusCode) }
             }
 
         @Test

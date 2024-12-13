@@ -7,6 +7,7 @@ import com.flip.skateshop.interfaces.service.FileServiceInterface
 import io.minio.MinioAsyncClient
 import io.minio.ObjectWriteResponse
 import io.minio.PutObjectArgs
+import io.minio.RemoveObjectArgs
 import kotlinx.coroutines.future.await
 import org.bson.types.ObjectId
 import org.springframework.http.codec.multipart.FilePart
@@ -57,6 +58,17 @@ class FileService(
         val key = "${PRODUCT_PICTURE_PREFIX.format(productId)}/$filename"
         putFile(key, data, type)
         return key
+    }
+
+    override suspend fun deleteFile(key: String) {
+        val request =
+            RemoveObjectArgs
+                .builder()
+                .apply {
+                    bucket(properties.bucket)
+                    `object`(key)
+                }.build()
+        minioClient.removeObject(request)
     }
 
     private suspend fun putFile(

@@ -27,4 +27,6 @@ interface FileServiceInterface {
         data: ByteArray,
         type: String?,
     ): String
+
+    suspend fun deleteFile(key: String)
 }
