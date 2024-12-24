@@ -22,13 +22,18 @@ import org.springframework.data.repository.kotlin.CoroutineCrudRepository
 import org.springframework.stereotype.Repository
 
 @Repository
-interface ProductCRUDRepository : CoroutineCrudRepository<Product, ObjectId>
+interface ProductCRUDRepository : CoroutineCrudRepository<Product, ObjectId> {
+    @Suppress("FunctionName")
+    suspend fun findBy_idIn(_id: Collection<ObjectId>): Flow<Product>
+}
 
 @Repository
 class ProductRepository(
     private val repository: ProductCRUDRepository,
     private val mongoTemplate: ReactiveMongoTemplate,
 ) : ProductRepositoryInterface {
+    override suspend fun findByIdIn(productIds: Collection<ObjectId>): Flow<Product> = repository.findBy_idIn(productIds)
+
     override suspend fun save(product: Product): Product = repository.save(product)
 
     override suspend fun updateProduct(

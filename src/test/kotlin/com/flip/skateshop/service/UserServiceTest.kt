@@ -72,6 +72,7 @@ class UserServiceTest
             activationKey: VerificationKey? = null,
             resetPasswordKey: VerificationKey? = null,
             enabled: Boolean = true,
+            cart: Map<ObjectId, Long> = emptyMap(),
         ) = userRepository.save(
             User(
                 ObjectId(),
@@ -91,6 +92,7 @@ class UserServiceTest
                 activationKey,
                 resetPasswordKey,
                 enabled,
+                cart,
             ),
         )
 

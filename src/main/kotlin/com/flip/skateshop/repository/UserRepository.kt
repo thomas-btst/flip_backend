@@ -5,6 +5,7 @@ import com.flip.skateshop.domain.User
 import com.flip.skateshop.domain.VerificationKey
 import com.flip.skateshop.interfaces.repository.UserRepositoryInterface
 import com.flip.skateshop.web.rest.dto.UpdateUserDto
+import com.mongodb.client.result.UpdateResult
 import kotlinx.coroutines.reactive.awaitFirst
 import kotlinx.coroutines.reactor.awaitSingleOrNull
 import org.bson.types.ObjectId
@@ -148,5 +149,30 @@ class UserRepository(
                 set(User::logo.name, logo)
             }
         mongoTemplate.updateFirst(query, update, User::class.java).awaitFirst()
+    }
+
+    override suspend fun addToCart(
+        userId: ObjectId,
+        productId: ObjectId,
+        quantity: Long,
+    ) {
+        val query = Query().addCriteria(User::_id isEqualTo userId)
+        val update =
+            Update().apply {
+                set("${User::cart.name}.$productId", quantity)
+            }
+        mongoTemplate.updateFirst(query, update, User::class.java).awaitFirst()
+    }
+
+    override suspend fun removeFromCart(
+        userId: ObjectId,
+        productId: ObjectId,
+    ): UpdateResult {
+        val query = Query().addCriteria(User::_id isEqualTo userId)
+        val update =
+            Update().apply {
+                unset("${User::cart.name}.$productId")
+            }
+        return mongoTemplate.updateFirst(query, update, User::class.java).awaitFirst()
     }
 }

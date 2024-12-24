@@ -1,9 +1,9 @@
 package com.flip.skateshop.web.rest.dto
 
+import com.flip.skateshop.validator.PhoneFormat
+import com.flip.skateshop.validator.ZipCodeFormat
 import jakarta.validation.Valid
 import jakarta.validation.constraints.NotBlank
-import validator.PhoneFormat
-import validator.ZipCodeFormat
 
 class AddressDto(
     @field:NotBlank

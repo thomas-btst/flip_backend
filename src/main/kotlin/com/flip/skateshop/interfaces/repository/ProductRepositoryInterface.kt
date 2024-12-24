@@ -41,4 +41,6 @@ interface ProductRepositoryInterface {
         maxPrice: Long?,
         search: String,
     ): Pair<List<Product>, Boolean>
+
+    suspend fun findByIdIn(productIds: Collection<ObjectId>): Flow<Product>
 }

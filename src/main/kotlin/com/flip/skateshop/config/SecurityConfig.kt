@@ -71,6 +71,7 @@ class SecurityConfig(
                 authorize("/auth/**", permitAll)
                 authorize("/public/**", permitAll)
                 authorize("/users/**", authenticated)
+                authorize("/carts/**", authenticated)
                 authorize("/products/**", hasAuthority(ADMIN))
                 authorize("/", permitAll)
                 authorize(anyExchange, denyAll)

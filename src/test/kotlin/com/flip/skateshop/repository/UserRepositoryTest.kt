@@ -39,6 +39,7 @@ class UserRepositoryTest(
         roles: Set<RoleEnum> = emptySet(),
         logo: String? = null,
         enabled: Boolean = true,
+        cart: Map<ObjectId, Long> = emptyMap(),
     ): User =
         User(
             ObjectId(),
@@ -53,6 +54,7 @@ class UserRepositoryTest(
             activationKey,
             resetPasswordKey,
             enabled,
+            cart,
         )
 
     @Test
@@ -340,5 +342,30 @@ class UserRepositoryTest(
             val updatedUser = userRepository.findById(user._id)
             assertNotNull(updatedUser)
             assertEquals(logo, updatedUser.logo)
+        }
+
+    @Test
+    fun `should add a product to the cart successfully`() =
+        runTest {
+            val user = user(cart = emptyMap())
+            userRepository.save(user)
+            val productId = ObjectId()
+            val quantity = 8L
+            userRepository.addToCart(user._id, productId, quantity)
+            val updatedUser = userRepository.findById(user._id)
+            assertNotNull(updatedUser)
+            assertEquals(updatedUser.cart[productId], quantity)
+        }
+
+    @Test
+    fun `should delete a product to the cart correctly`() =
+        runTest {
+            val productId = ObjectId()
+            val user = user(cart = mapOf(Pair(productId, 8L)))
+            userRepository.save(user)
+            userRepository.removeFromCart(user._id, productId)
+            val updatedUser = userRepository.findById(user._id)
+            assertNotNull(updatedUser)
+            assertNull(updatedUser.cart[productId])
         }
 }

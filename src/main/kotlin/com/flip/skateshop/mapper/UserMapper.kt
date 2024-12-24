@@ -38,6 +38,7 @@ class UserMapper(
             VerificationKey(activationKey, Instant.now().plusSeconds(keyValidity)),
             null,
             false,
+            emptyMap(),
         )
     }
 

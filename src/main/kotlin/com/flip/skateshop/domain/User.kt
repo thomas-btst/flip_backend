@@ -20,6 +20,7 @@ class User(
     val activationKey: VerificationKey?,
     val resetPasswordKey: VerificationKey?,
     val enabled: Boolean,
+    val cart: Map<ObjectId, Long>,
 ) {
     companion object {
         const val DOCUMENT_NAME = "users"

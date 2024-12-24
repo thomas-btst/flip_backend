@@ -2,6 +2,7 @@ package com.flip.skateshop.interfaces.repository
 
 import com.flip.skateshop.domain.User
 import com.flip.skateshop.web.rest.dto.UpdateUserDto
+import com.mongodb.client.result.UpdateResult
 import org.bson.types.ObjectId
 
 interface UserRepositoryInterface {
@@ -43,4 +44,15 @@ interface UserRepositoryInterface {
         userId: ObjectId,
         logo: String,
     )
+
+    suspend fun addToCart(
+        userId: ObjectId,
+        productId: ObjectId,
+        quantity: Long,
+    )
+
+    suspend fun removeFromCart(
+        userId: ObjectId,
+        productId: ObjectId,
+    ): UpdateResult
 }
