@@ -10,6 +10,7 @@ import com.nimbusds.jose.jwk.source.ImmutableJWKSet
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.core.convert.converter.Converter
+import org.springframework.http.HttpMethod
 import org.springframework.security.authentication.AbstractAuthenticationToken
 import org.springframework.security.authentication.ReactiveAuthenticationManager
 import org.springframework.security.authentication.UserDetailsRepositoryReactiveAuthenticationManager
@@ -72,6 +73,9 @@ class SecurityConfig(
                 authorize("/public/**", permitAll)
                 authorize("/users/**", authenticated)
                 authorize("/carts/**", authenticated)
+                authorize(pathMatchers(HttpMethod.GET, "/commands/limit/{limit}/page/{page}"), hasAuthority(ADMIN))
+                authorize(pathMatchers(HttpMethod.GET, "/commands/admin/{commandId}"), hasAuthority(ADMIN))
+                authorize("/commands/**", authenticated)
                 authorize("/products/**", hasAuthority(ADMIN))
                 authorize("/", permitAll)
                 authorize(anyExchange, denyAll)

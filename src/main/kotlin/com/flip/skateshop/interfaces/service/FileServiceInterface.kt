@@ -28,5 +28,13 @@ interface FileServiceInterface {
         type: String?,
     ): String
 
+    suspend fun putCommandInvoice(
+        userId: ObjectId,
+        invoiceId: ObjectId,
+        filename: String,
+        data: ByteArray,
+        type: String?,
+    ): String
+
     suspend fun deleteFile(key: String)
 }

@@ -23,9 +23,11 @@ class FileService(
 
     companion object {
         const val PRODUCT_ROOT = "products"
-        const val USER_ROOT = "products"
+        const val USER_ROOT = "users"
+        const val INVOICE_ROOT = "$USER_ROOT/%s/invoices"
         const val PRODUCT_PICTURE_PREFIX = "$PUBLIC_ROOT/$PRODUCT_ROOT/%s/pictures"
         const val USER_LOGO_PREFIX = "$PUBLIC_ROOT/$USER_ROOT/%s/logos"
+        const val COMMAND_INVOICE_PREFIX = "$PUBLIC_ROOT/$INVOICE_ROOT/%s"
     }
 
     override suspend fun putUserLogo(
@@ -56,6 +58,18 @@ class FileService(
         type: String?,
     ): String {
         val key = "${PRODUCT_PICTURE_PREFIX.format(productId)}/$filename"
+        putFile(key, data, type)
+        return key
+    }
+
+    override suspend fun putCommandInvoice(
+        userId: ObjectId,
+        invoiceId: ObjectId,
+        filename: String,
+        data: ByteArray,
+        type: String?,
+    ): String {
+        val key = "${COMMAND_INVOICE_PREFIX.format(userId, invoiceId)}/$filename"
         putFile(key, data, type)
         return key
     }

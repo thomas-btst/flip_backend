@@ -34,6 +34,7 @@ spring:
           required: true
 
 skateshop:
+  logo: https://example.com/logo.jpeg
   security:
     jwt:
       secret-key: devSecretKeyForJwtTokenMustBeAtLeast32BytesLong!

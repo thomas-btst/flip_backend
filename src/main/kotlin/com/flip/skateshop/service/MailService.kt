@@ -2,6 +2,7 @@ package com.flip.skateshop.service
 
 import com.flip.skateshop.config.SpringProperties
 import com.flip.skateshop.interfaces.service.MailServiceInterface
+import jakarta.mail.util.ByteArrayDataSource
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import org.springframework.mail.javamail.JavaMailSender
@@ -39,6 +40,7 @@ class MailService(
         to: String,
         subject: String,
         body: String,
+        files: Map<String, String> = emptyMap(),
     ) {
         scope.launch {
             val message = javaMailSender.createMimeMessage()
@@ -47,6 +49,9 @@ class MailService(
             helper.setTo(to)
             helper.setSubject(subject)
             helper.setText(body, true)
+            files.forEach { (filename, content) ->
+                helper.addAttachment(filename, ByteArrayDataSource(content.toByteArray(), "application/octet-stream"))
+            }
             javaMailSender.send(message)
         }
     }
@@ -82,6 +87,32 @@ class MailService(
                 "$MAIL_RESOURCE_DIR/resetPasswordEmail.html",
                 getContext(subject, firstName, lastName, key),
             ),
+        )
+    }
+
+    override suspend fun sendCommandConfirmation(
+        email: String,
+        firstName: String,
+        lastName: String,
+        commandId: String,
+        invoice: String,
+    ) {
+        val subject = "Confirmation de ta commande Flip Skateshop"
+        val context =
+            Context().apply {
+                setVariable("title", subject)
+                setVariable("firstName", firstName)
+                setVariable("lastName", lastName)
+                setVariable("commandId", commandId)
+            }
+        sendMail(
+            email,
+            subject,
+            templateEngine.process(
+                "$MAIL_RESOURCE_DIR/commandConfirmationEmail.html",
+                context,
+            ),
+            mapOf(Pair("invoice.html", invoice)),
         )
     }
 }

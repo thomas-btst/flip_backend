@@ -175,4 +175,13 @@ class UserRepository(
             }
         return mongoTemplate.updateFirst(query, update, User::class.java).awaitFirst()
     }
+
+    override suspend fun clearCart(userId: ObjectId) {
+        val query = Query().addCriteria(User::_id isEqualTo userId)
+        val update =
+            Update().apply {
+                set(User::cart.name, emptyMap<ObjectId, Long>())
+            }
+        mongoTemplate.updateFirst(query, update, User::class.java).awaitFirst()
+    }
 }

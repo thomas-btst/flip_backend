@@ -55,4 +55,6 @@ interface UserRepositoryInterface {
         userId: ObjectId,
         productId: ObjectId,
     ): UpdateResult
+
+    suspend fun clearCart(userId: ObjectId)
 }

@@ -368,4 +368,25 @@ class UserRepositoryTest(
             assertNotNull(updatedUser)
             assertNull(updatedUser.cart[productId])
         }
+
+    @Test
+    fun `should clear cart successfully`() =
+        runTest {
+            val user =
+                user(
+                    cart =
+                        mapOf(
+                            Pair(ObjectId(), 8L),
+                            Pair(ObjectId(), 2L),
+                            Pair(ObjectId(), 8L),
+                            Pair(ObjectId(), 1L),
+                            Pair(ObjectId(), 6L),
+                        ),
+                )
+            userRepository.save(user)
+            userRepository.clearCart(user._id)
+            val updatedUser = userRepository.findById(user._id)
+            assertNotNull(updatedUser)
+            assert(updatedUser.cart.isEmpty())
+        }
 }

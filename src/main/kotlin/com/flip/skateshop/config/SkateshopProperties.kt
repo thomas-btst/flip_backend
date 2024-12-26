@@ -4,6 +4,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties
 
 @ConfigurationProperties("skateshop")
 class SkateshopProperties(
+    val logo: String,
     val security: Security,
     val minio: Minio,
 ) {

@@ -46,6 +46,13 @@ class CartController(
         cartService.removeProductFromCart(id)
     }
 
+    @DeleteMapping
+    @Operation(summary = "Clear the cart")
+    @ApiResponses(ApiResponse(responseCode = "204"))
+    suspend fun clearCart() {
+        cartService.clearCartForCurrentUser()
+    }
+
     @GetMapping
     @Operation(summary = "Get cart")
     @ApiResponses(ApiResponse(responseCode = "200"))

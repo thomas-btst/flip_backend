@@ -14,4 +14,12 @@ interface MailServiceInterface {
         lastName: String,
         key: String,
     )
+
+    suspend fun sendCommandConfirmation(
+        email: String,
+        firstName: String,
+        lastName: String,
+        commandId: String,
+        invoice: String,
+    )
 }

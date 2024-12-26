@@ -21,13 +21,13 @@ spring:
           required: true
 
 skateshop:
+  logo: https://example.com/logo.jpeg
   security:
     jwt:
       secret-key: devSecretKeyForJwtTokenMustBeAtLeast32BytesLong!
       token-validity-in-seconds: 9999999999
     verification-key:
       validity-in-seconds: 180
-
   minio:
     access-key: minioadmin
     bucket: flip-test

@@ -11,6 +11,7 @@ import org.springframework.context.annotation.Configuration
 class MinioConfig {
     companion object {
         const val PUBLIC_ROOT = "public"
+        const val PRIVATE_ROOT = "private"
     }
 
     @Bean

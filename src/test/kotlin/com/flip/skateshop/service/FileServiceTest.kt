@@ -47,4 +47,19 @@ class FileServiceTest(
                 ImageIO.read(URL(fileMapper.toPublicPath(key)))
             }
         }
+
+    @Test
+    fun `should put an invoice correctly`() =
+        runTest {
+            val invoice = "html"
+            val key =
+                fileService.putCommandInvoice(
+                    ObjectId(),
+                    ObjectId(),
+                    "invoice.html",
+                    invoice.toByteArray(),
+                    MediaType.TEXT_HTML.toString(),
+                )
+            ImageIO.read(URL(fileMapper.toPublicPath(key)))
+        }
 }

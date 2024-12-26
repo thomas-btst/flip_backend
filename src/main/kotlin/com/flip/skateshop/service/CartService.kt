@@ -53,4 +53,9 @@ class CartService(
         val user = userService.getCurrentUser()
         return CartQuantityDto(user.cart.get(productId) ?: 0)
     }
+
+    override suspend fun clearCartForCurrentUser() {
+        val userId = securityUtils.getCurrentUserId()
+        userRepository.clearCart(userId)
+    }
 }

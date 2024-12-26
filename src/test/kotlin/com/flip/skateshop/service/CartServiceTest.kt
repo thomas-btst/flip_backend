@@ -173,4 +173,24 @@ class CartServiceTest(
                 assertEquals(quantity, cartQuantity)
             }
         }
+
+    @Test
+    fun `should clear cart correcty`() =
+        runTest {
+            val user =
+                createUser(
+                    cart =
+                        mapOf(
+                            Pair(ObjectId(), 7L),
+                            Pair(ObjectId(), 8L),
+                            Pair(ObjectId(), 3L),
+                            Pair(ObjectId(), 1L),
+                        ),
+                )
+            coEvery { securityUtils.getCurrentUserId() } returns user._id
+            cartService.clearCartForCurrentUser()
+            val foundUser = userRepository.findById(user._id)
+            assertNotNull(foundUser)
+            assert(foundUser.cart.isEmpty())
+        }
 }

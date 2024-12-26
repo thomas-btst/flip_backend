@@ -1,0 +1,167 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title th:text="'Facture ' + ${invoiceId}"></title>
+    <style>
+        .invoice-box {
+            color: black;
+            max-width: 800px;
+            margin: auto;
+            padding: 30px;
+            border: 1px solid #eee;
+            box-shadow: 0 0 10px rgba(0, 0, 0, .15);
+            font-size: 16px;
+            line-height: 24px;
+            font-family: 'Helvetica Neue', Helvetica, Helvetica, Arial, sans-serif;
+        }
+
+        .invoice-box table {
+            width: 100%;
+            line-height: inherit;
+            text-align: left;
+        }
+
+        .invoice-box table td {
+            padding: 5px;
+            vertical-align: top;
+        }
+
+        .invoice-box table tr td:nth-child(5) {
+            text-align: right;
+        }
+
+        .invoice-box table tr.top table td {
+            padding-bottom: 20px;
+        }
+
+        .invoice-box table tr.top table td.title {
+            font-size: 45px;
+            line-height: 45px;
+        }
+
+        .invoice-box table tr.information table td {
+            padding-bottom: 40px;
+        }
+
+        .invoice-box table tr.heading td {
+            border-bottom: 1px solid;
+            font-weight: 700;
+        }
+
+        .invoice-box table tr.details td {
+            padding-bottom: 20px;
+        }
+
+        .invoice-box table tr.item td {
+            border-bottom: 1px solid;
+            border-color: #cccccc;
+        }
+
+        .invoice-box table tr.item.last td {
+            border-bottom: none;
+        }
+
+        .invoice-box table tr.total td:nth-child(5) {
+            border-top: 2px solid;
+            border-color: gray;
+            font-weight: 700;
+        }
+
+        @media only screen and (max-width:600px) {
+            .invoice-box table tr.top table td {
+                width: 100%;
+                display: block;
+                text-align: center;
+            }
+
+            .invoice-box table tr.information table td {
+                width: 100%;
+                display: block;
+                text-align: center;
+            }
+        }
+
+        .rtl {
+            direction: rtl;
+            font-family: Tahoma, 'Helvetica Neue', Helvetica, Helvetica, Arial, sans-serif;
+        }
+
+        .rtl table {
+            text-align: right;
+        }
+
+        .rtl table tr td:nth-child(3) {
+            text-align: left;
+        }
+    </style>
+</head>
+<body>
+<div class="invoice-box">
+    <table cellpadding="0" cellspacing="0">
+        <tr class="top">
+            <td class="title">
+                <!-- Logo can be included here -->
+                <img th:src="${logo}" alt="Logo" style="max-height: 100px;">
+            </td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td>
+                <span th:text="' Facture ' + ${invoiceId}"></span><br>
+                <span th:text="'Date : ' + ${date}"></span><br>
+            </td>
+        </tr>
+        <tr class="information">
+            <td colspan="5">
+                <table>
+                    <tr>
+                        <td>
+                            <span>Siret : 89291229797407</span><br>
+                            <span>Flip</span><br>
+                            <span>13 rue Flip</span><br>
+                            <span>Marseille 13000</span><br>
+                            <span>France</span>
+                        </td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td>
+                            <span th:text="${firstname}"></span><br>
+                            <span th:text="${lastname}"></span><br>
+                            <span th:text="${address}"></span><br>
+                            <span th:text="${city}"></span>
+                            <span th:text="${postalCode}"></span><br>
+                            <span th:text="France"></span>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+        <tr class="heading">
+            <td>Produit</td>
+            <td>Quantité</td>
+            <td>Prix unitaire HT</td>
+            <td>Prix unitaire TTC</td>
+            <td>Total</td>
+        </tr>
+        <tr th:each="item, iterStat : ${items}"
+            th:classappend="${iterStat.last} ? 'last' : ''"
+            class="item">
+            <td th:text="${item.name}"></td>
+            <td th:text="${item.quantity}"></td>
+            <td th:text="${item.unitPriceHT}"></td>
+            <td th:text="${item.unitPriceTTC}"></td>
+            <td th:text="${item.totalPrice}"></td>
+        </tr>
+        <tr class="total">
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td th:text="'Total : ' + ${total}"></td>
+        </tr>
+    </table>
+</div>
+</body>
+</html>

@@ -15,4 +15,6 @@ interface CartServiceInterface {
     suspend fun removeProductFromCart(productId: ObjectId)
 
     suspend fun getCartQuantity(productId: ObjectId): CartQuantityDto
+
+    suspend fun clearCartForCurrentUser()
 }
