@@ -1,11 +1,14 @@
 package com.flip.skateshop.web.rest
 
 import com.flip.skateshop.interfaces.service.UserServiceInterface
+import com.flip.skateshop.web.rest.dto.AccessTokenDto
 import com.flip.skateshop.web.rest.dto.ActivationDto
 import com.flip.skateshop.web.rest.dto.LoginDto
+import com.flip.skateshop.web.rest.dto.RefreshTokenDto
 import com.flip.skateshop.web.rest.dto.RegisterDto
 import com.flip.skateshop.web.rest.dto.ResetPasswordDto
 import com.flip.skateshop.web.rest.dto.TokenDto
+import io.github.resilience4j.ratelimiter.annotation.RateLimiter
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
@@ -18,6 +21,7 @@ import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
+import java.util.function.*
 
 @RestController
 @RequestMapping("/auth")
@@ -31,6 +35,7 @@ class AuthenticationController(
         ApiResponse(responseCode = "401", description = "Login or password is incorrect"),
         ApiResponse(responseCode = "403", description = "Account is not activated yet"),
     )
+    @RateLimiter(name = "password")
     suspend fun login(
         @RequestBody @Valid loginDto: LoginDto,
     ): TokenDto = userService.login(loginDto)
@@ -46,6 +51,29 @@ class AuthenticationController(
         @RequestBody @Valid registerDto: RegisterDto,
     ) {
         userService.register(registerDto)
+    }
+
+    @PostMapping("/token/refresh")
+    @Operation(summary = "Refresh an access user")
+    @ApiResponses(
+        ApiResponse(responseCode = "200"),
+        ApiResponse(responseCode = "401", description = "Access token is invalid or refresh token is invalid or expired"),
+    )
+    suspend fun refreshToken(
+        @RequestBody refreshTokenDto: RefreshTokenDto,
+    ): AccessTokenDto = userService.refreshToken(refreshTokenDto)
+
+    @PostMapping("/logout")
+    @Operation(summary = "Logout an user")
+    @ApiResponses(
+        ApiResponse(responseCode = "204"),
+        ApiResponse(responseCode = "401", description = "Access token is invalid"),
+    )
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    suspend fun logout(
+        @RequestBody refreshTokenDto: RefreshTokenDto,
+    ) {
+        userService.logout(refreshTokenDto)
     }
 
     @PostMapping("/activate/send/{email}")
@@ -84,6 +112,7 @@ class AuthenticationController(
         ApiResponse(responseCode = "200"),
         ApiResponse(responseCode = "403", description = "Verification key is incorrect or has expired"),
     )
+    @RateLimiter(name = "password")
     suspend fun resetPassword(
         @RequestBody @Valid resetPasswordDto: ResetPasswordDto,
     ): TokenDto = userService.resetPassword(resetPasswordDto)

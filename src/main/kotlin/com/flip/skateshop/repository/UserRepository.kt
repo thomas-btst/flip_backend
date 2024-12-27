@@ -7,6 +7,7 @@ import com.flip.skateshop.interfaces.repository.UserRepositoryInterface
 import com.flip.skateshop.web.rest.dto.UpdateUserDto
 import com.mongodb.client.result.UpdateResult
 import kotlinx.coroutines.reactive.awaitFirst
+import kotlinx.coroutines.reactive.awaitFirstOrNull
 import kotlinx.coroutines.reactor.awaitSingleOrNull
 import org.bson.types.ObjectId
 import org.springframework.data.mapping.div
@@ -183,5 +184,42 @@ class UserRepository(
                 set(User::cart.name, emptyMap<ObjectId, Long>())
             }
         mongoTemplate.updateFirst(query, update, User::class.java).awaitFirst()
+    }
+
+    override suspend fun addRefreshToken(
+        userId: ObjectId,
+        token: String,
+        expiration: Instant,
+    ): UpdateResult {
+        val query = Query().addCriteria(User::_id isEqualTo userId)
+        val update =
+            Update().apply {
+                set("${User::refreshTokens.name}.$token", expiration)
+            }
+        return mongoTemplate.updateFirst(query, update, User::class.java).awaitFirst()
+    }
+
+    override suspend fun deleteRefreshToken(
+        userId: ObjectId,
+        token: String,
+    ): UpdateResult {
+        val query = Query().addCriteria(User::_id isEqualTo userId)
+        val update =
+            Update().apply {
+                unset("${User::refreshTokens.name}.$token")
+            }
+        return mongoTemplate.updateFirst(query, update, User::class.java).awaitFirst()
+    }
+
+    override suspend fun refreshTokenExistsAndNotExpired(
+        userId: ObjectId,
+        token: String,
+    ): User? {
+        val query =
+            Query().apply {
+                addCriteria(User::_id isEqualTo userId)
+                addCriteria(Criteria.where("${User::refreshTokens.name}.$token").gte(Instant.now()))
+            }
+        return mongoTemplate.findOne(query, User::class.java).awaitFirstOrNull()
     }
 }

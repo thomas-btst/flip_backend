@@ -1,5 +1,6 @@
 package com.flip.skateshop.service
 
+import com.flip.skateshop.config.SkateshopProperties
 import com.flip.skateshop.domain.RoleEnum
 import com.flip.skateshop.domain.User
 import com.flip.skateshop.extention.normalizedEmail
@@ -12,20 +13,29 @@ import com.flip.skateshop.security.DomainUserDetails
 import com.flip.skateshop.security.JwtClaimer
 import com.flip.skateshop.security.SecurityUtils
 import com.flip.skateshop.utils.randomString
+import com.flip.skateshop.web.rest.dto.AccessTokenDto
 import com.flip.skateshop.web.rest.dto.LoginDto
+import com.flip.skateshop.web.rest.dto.RefreshTokenDto
 import com.flip.skateshop.web.rest.dto.RegisterDto
 import com.flip.skateshop.web.rest.dto.ResetPasswordDto
 import com.flip.skateshop.web.rest.dto.TokenDto
 import com.flip.skateshop.web.rest.dto.UpdateUserDto
+import kotlinx.coroutines.reactive.awaitFirst
 import kotlinx.coroutines.reactive.awaitSingle
 import org.bson.types.ObjectId
+import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.http.HttpStatus
 import org.springframework.http.codec.multipart.FilePart
 import org.springframework.security.authentication.ReactiveAuthenticationManager
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
 import org.springframework.security.crypto.password.PasswordEncoder
+import org.springframework.security.oauth2.jwt.BadJwtException
+import org.springframework.security.oauth2.jwt.Jwt
+import org.springframework.security.oauth2.jwt.ReactiveJwtDecoder
 import org.springframework.stereotype.Service
 import org.springframework.web.server.ResponseStatusException
+import java.time.Instant
+import java.util.*
 
 @Service
 class UserService(
@@ -37,6 +47,9 @@ class UserService(
     private val mailService: MailServiceInterface,
     private val passwordEncoder: PasswordEncoder,
     private val fileService: FileServiceInterface,
+    private val properties: SkateshopProperties,
+    @Qualifier("no_expiration")
+    private val jwtDecoder: ReactiveJwtDecoder,
 ) : UserServiceInterface {
     override suspend fun getCurrentUser(): User {
         val currentUserId = securityUtils.getCurrentUserId()
@@ -56,12 +69,24 @@ class UserService(
         userRepository.updateUserLogo(userId, path)
     }
 
-    override fun createToken(
+    fun createAccessToken(
+        userId: ObjectId,
+        authorities: List<RoleEnum>,
+    ): String = jwtClaimer.createToken(userId.toHexString(), authorities.map { it.toString() })
+
+    suspend fun createTokens(
         userId: ObjectId,
         authorities: List<RoleEnum>,
     ): TokenDto {
-        val token = jwtClaimer.createToken(userId.toHexString(), authorities.map { it.toString() })
-        return TokenDto(token, authorities)
+        val accessToken = createAccessToken(userId, authorities)
+        val refreshToken = UUID.randomUUID().toString()
+        val expiration = Instant.now().plusSeconds(properties.security.refreshToken.validityInSeconds)
+        userRepository.addRefreshToken(
+            userId,
+            refreshToken,
+            expiration,
+        )
+        return TokenDto(accessToken, refreshToken, authorities)
     }
 
     override suspend fun login(loginDto: LoginDto): TokenDto {
@@ -76,7 +101,7 @@ class UserService(
             throw ResponseStatusException(HttpStatus.FORBIDDEN)
         }
 
-        return createToken(principal.id, authentication.authorities.map { RoleEnum.valueOf(it.toString()) })
+        return createTokens(principal.id, authentication.authorities.map { RoleEnum.valueOf(it.toString()) })
     }
 
     override suspend fun register(registerDto: RegisterDto) {
@@ -86,6 +111,26 @@ class UserService(
         val activationKey = randomString(6)
         val user = userRepository.save(userMapper.toUser(registerDto, activationKey))
         mailService.sendActivationKey(user.email, user.firstName, user.lastName, activationKey)
+    }
+
+    suspend fun decodeAccessToken(token: String): Jwt =
+        try {
+            jwtDecoder.decode(token).awaitFirst()
+        } catch (e: BadJwtException) {
+            throw ResponseStatusException(HttpStatus.UNAUTHORIZED, "Access token invalid")
+        }
+
+    override suspend fun refreshToken(refreshTokenDto: RefreshTokenDto): AccessTokenDto {
+        val token = decodeAccessToken(refreshTokenDto.accessToken)
+        val user =
+            userRepository.refreshTokenExistsAndNotExpired(ObjectId(token.subject), refreshTokenDto.refreshToken)
+                ?: throw ResponseStatusException(HttpStatus.UNAUTHORIZED, "Refresh token invalid or expired")
+        return AccessTokenDto(createAccessToken(user._id, user.roles.toList()))
+    }
+
+    override suspend fun logout(tokenDto: RefreshTokenDto) {
+        val token = decodeAccessToken(tokenDto.accessToken)
+        userRepository.deleteRefreshToken(ObjectId(token.subject), tokenDto.refreshToken)
     }
 
     override suspend fun sendActivationKey(email: String) {
@@ -104,7 +149,7 @@ class UserService(
             userRepository.activateAccountWithKey(normalizedEmail, activationKey) ?: throw ResponseStatusException(
                 HttpStatus.FORBIDDEN,
             )
-        return createToken(user._id, user.roles.toList())
+        return createTokens(user._id, user.roles.toList())
     }
 
     override suspend fun sendResetPasswordKey(email: String) {
@@ -122,6 +167,6 @@ class UserService(
                 reset.verificationKey,
                 passwordEncoder.encode(reset.newPassword),
             ) ?: throw ResponseStatusException(HttpStatus.FORBIDDEN)
-        return createToken(user._id, user.roles.toList())
+        return createTokens(user._id, user.roles.toList())
     }
 }

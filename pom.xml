@@ -31,7 +31,19 @@
         <kotlin.version>2.0.20</kotlin.version>
         <kotlinx.version>1.9.0</kotlinx.version>
         <spring.version>3.3.5</spring.version>
+        <spring-cloud.version>2023.0.4</spring-cloud.version>
     </properties>
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.springframework.cloud</groupId>
+                <artifactId>spring-cloud-dependencies</artifactId>
+                <version>${spring-cloud.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
     <dependencies>
         <!-- Spring Boot Starter Web -->
         <dependency>
@@ -86,6 +98,11 @@
             <artifactId>spring-boot-starter-oauth2-resource-server</artifactId>
             <version>${spring.version}</version>
         </dependency>
+
+<!--        <dependency>-->
+<!--            <groupId>com.giffing.bucket4j.spring.boot.starter</groupId>-->
+<!--            <artifactId>bucket4j-spring-boot-starter</artifactId>-->
+<!--        </dependency>-->
 
         <!-- Spring Boot Validation -->
         <dependency>
@@ -191,6 +208,30 @@
             <groupId>io.github.tobi2k</groupId>
             <artifactId>ktlint-gitlab-reporter</artifactId>
             <version>2.0.1</version>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-actuator</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-aop</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.github.resilience4j</groupId>
+            <artifactId>resilience4j-spring-boot3</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.github.resilience4j</groupId>
+            <artifactId>resilience4j-kotlin</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.github.resilience4j</groupId>
+            <artifactId>resilience4j-reactor</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.github.resilience4j</groupId>
+            <artifactId>resilience4j-retry</artifactId>
         </dependency>
 
     </dependencies>

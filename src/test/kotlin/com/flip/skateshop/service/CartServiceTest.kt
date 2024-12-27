@@ -20,6 +20,7 @@ import org.junit.jupiter.api.assertThrows
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpStatus
 import org.springframework.web.server.ResponseStatusException
+import java.time.Instant
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
@@ -46,6 +47,7 @@ class CartServiceTest(
         activationKey: VerificationKey? = null,
         resetPasswordKey: VerificationKey? = null,
         enabled: Boolean = true,
+        refreshTokens: Map<String, Instant> = emptyMap(),
         cart: Map<ObjectId, Long> = emptyMap(),
     ) = userRepository.save(
         User(
@@ -66,6 +68,7 @@ class CartServiceTest(
             activationKey,
             resetPasswordKey,
             enabled,
+            refreshTokens,
             cart,
         ),
     )

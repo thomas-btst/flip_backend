@@ -39,6 +39,7 @@ class UserRepositoryTest(
         roles: Set<RoleEnum> = emptySet(),
         logo: String? = null,
         enabled: Boolean = true,
+        refreshTokens: Map<String, Instant> = emptyMap(),
         cart: Map<ObjectId, Long> = emptyMap(),
     ): User =
         User(
@@ -54,6 +55,7 @@ class UserRepositoryTest(
             activationKey,
             resetPasswordKey,
             enabled,
+            refreshTokens,
             cart,
         )
 
@@ -388,5 +390,82 @@ class UserRepositoryTest(
             val updatedUser = userRepository.findById(user._id)
             assertNotNull(updatedUser)
             assert(updatedUser.cart.isEmpty())
+        }
+
+    @Test
+    fun `should add refresh token correctly`() =
+        runTest {
+            val user = user(refreshTokens = emptyMap())
+            userRepository.save(user)
+            val token = "token"
+            userRepository.addRefreshToken(user._id, token, Instant.now())
+            val updatedUser = userRepository.findById(user._id)
+            assertNotNull(updatedUser)
+            assertEquals(1, updatedUser.refreshTokens.size)
+            assertNotNull(updatedUser.refreshTokens[token])
+        }
+
+    @Test
+    fun `should delete a refresh token correctly`() =
+        runTest {
+            val tokenToDelete = "tokenToDelete"
+            val user =
+                user(
+                    refreshTokens =
+                        mapOf(
+                            Pair(tokenToDelete, Instant.now()),
+                            Pair("token", Instant.now()),
+                        ),
+                )
+            userRepository.save(user)
+            userRepository.deleteRefreshToken(user._id, tokenToDelete)
+            val updatedUser = userRepository.findById(user._id)
+            assertNotNull(updatedUser)
+            assertEquals(1, updatedUser.refreshTokens.size)
+            assertNull(updatedUser.refreshTokens[tokenToDelete])
+        }
+
+    @Test
+    fun `should check if a refresh token is valid correctly`() =
+        runTest {
+            val token = "token"
+            val user =
+                user(
+                    refreshTokens =
+                        mapOf(
+                            Pair(token, Instant.now().plusSeconds(properties.security.refreshToken.validityInSeconds)),
+                        ),
+                )
+            userRepository.save(user)
+            assertNotNull(userRepository.refreshTokenExistsAndNotExpired(user._id, token))
+        }
+
+    @Test
+    fun `should check if a refresh token is invalid`() =
+        runTest {
+            val user =
+                user(
+                    refreshTokens =
+                        mapOf(
+                            Pair("token", Instant.now().plusSeconds(properties.security.refreshToken.validityInSeconds)),
+                        ),
+                )
+            userRepository.save(user)
+            assertNull(userRepository.refreshTokenExistsAndNotExpired(user._id, "bad token"))
+        }
+
+    @Test
+    fun `should check if a refresh token is expired`() =
+        runTest {
+            val token = "token"
+            val user =
+                user(
+                    refreshTokens =
+                        mapOf(
+                            Pair(token, Instant.now().minusSeconds(1L)),
+                        ),
+                )
+            userRepository.save(user)
+            assertNull(userRepository.refreshTokenExistsAndNotExpired(user._id, token))
         }
 }

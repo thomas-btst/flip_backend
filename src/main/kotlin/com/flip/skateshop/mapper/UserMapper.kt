@@ -39,6 +39,7 @@ class UserMapper(
             null,
             false,
             emptyMap(),
+            emptyMap(),
         )
     }
 

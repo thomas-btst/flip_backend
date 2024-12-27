@@ -83,6 +83,7 @@ class CommandServiceTest(
         activationKey: VerificationKey? = null,
         resetPasswordKey: VerificationKey? = null,
         enabled: Boolean = true,
+        refreshTokens: Map<String, Instant> = emptyMap(),
         cart: Map<ObjectId, Long> = emptyMap(),
     ) = userRepository.save(
         User(
@@ -98,6 +99,7 @@ class CommandServiceTest(
             activationKey,
             resetPasswordKey,
             enabled,
+            refreshTokens,
             cart,
         ),
     )

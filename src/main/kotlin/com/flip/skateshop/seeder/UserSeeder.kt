@@ -36,6 +36,7 @@ class UserSeeder(
                     null,
                     true,
                     emptyMap(),
+                    emptyMap(),
                 ),
             )
         }
@@ -57,6 +58,7 @@ class UserSeeder(
                     null,
                     null,
                     faker.bool().bool(),
+                    emptyMap(),
                     emptyMap(),
                 ),
             )

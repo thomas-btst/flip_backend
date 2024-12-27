@@ -33,12 +33,21 @@ spring:
           enable: true
           required: true
 
+resilience4j.ratelimiter:
+  instances:
+    password:
+      limitForPeriod: 3
+      limitRefreshPeriod: 30s
+      timeoutDuration: 500ms
+
 skateshop:
   logo: https://example.com/logo.jpeg
   security:
     jwt:
       secret-key: devSecretKeyForJwtTokenMustBeAtLeast32BytesLong!
-      token-validity-in-seconds: 9999999999
+      token-validity-in-seconds: 600
+    refresh-token:
+      validity-in-seconds: 604800
     verification-key:
       validity-in-seconds: 180
 

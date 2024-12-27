@@ -14,6 +14,7 @@ import com.flip.skateshop.security.SecurityUtils
 import com.flip.skateshop.util.ServicesCleaner
 import com.flip.skateshop.web.rest.dto.AddressDto
 import com.flip.skateshop.web.rest.dto.LoginDto
+import com.flip.skateshop.web.rest.dto.RefreshTokenDto
 import com.flip.skateshop.web.rest.dto.RegisterDto
 import com.flip.skateshop.web.rest.dto.ResetPasswordDto
 import com.flip.skateshop.web.rest.dto.UpdateUserDto
@@ -26,6 +27,7 @@ import org.bson.types.ObjectId
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.http.HttpStatus
 import org.springframework.http.codec.multipart.FilePart
 import org.springframework.security.authentication.BadCredentialsException
@@ -36,6 +38,7 @@ import org.springframework.web.server.ResponseStatusException
 import java.time.Instant
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
+import kotlin.test.assertNull
 
 class UserServiceTest
     @Autowired
@@ -47,6 +50,8 @@ class UserServiceTest
         private val skateshopProperties: SkateshopProperties,
         userMapper: UserMapper,
         authenticationManager: ReactiveAuthenticationManager,
+        @Qualifier("no_expiration")
+        private val noExpJwtDecoder: ReactiveJwtDecoder,
     ) : ServicesCleaner() {
         private val securityUtils = mockk<SecurityUtils>()
         private val fileService = mockk<FileServiceInterface>(relaxed = true)
@@ -60,6 +65,8 @@ class UserServiceTest
                 mockk<MailServiceInterface>(relaxed = true),
                 passwordEncoder,
                 fileService,
+                skateshopProperties,
+                noExpJwtDecoder,
             )
 
         suspend fun createUser(
@@ -72,6 +79,7 @@ class UserServiceTest
             activationKey: VerificationKey? = null,
             resetPasswordKey: VerificationKey? = null,
             enabled: Boolean = true,
+            refreshTokens: Map<String, Instant> = emptyMap(),
             cart: Map<ObjectId, Long> = emptyMap(),
         ) = userRepository.save(
             User(
@@ -92,6 +100,7 @@ class UserServiceTest
                 activationKey,
                 resetPasswordKey,
                 enabled,
+                refreshTokens,
                 cart,
             ),
         )
@@ -119,21 +128,6 @@ class UserServiceTest
                     assertEquals(user.resetPasswordKey, resetPasswordKey)
                     assertEquals(user.enabled, enabled)
                 }
-            }
-
-        @Test
-        fun `should create a valid token`() =
-            runTest {
-                val userId = ObjectId()
-                val roles = listOf(RoleEnum.ADMIN)
-                val tokenDto = userService.createToken(userId, roles)
-                val decodedToken = jwtDecoder.decode(tokenDto.token).awaitSingle()
-                assertEquals(roles, tokenDto.roles)
-                assertEquals(userId.toHexString(), decodedToken.subject)
-                assertEquals(
-                    roles.map { it.toString() },
-                    jwtClaimer.claimAuthorities(decodedToken),
-                )
             }
 
         @Test
@@ -188,12 +182,23 @@ class UserServiceTest
                         password = password,
                         enabled = true,
                     )
-                userService.login(
-                    LoginDto(
-                        user.email.uppercase(),
-                        password,
-                    ),
+                val tokenDto =
+                    userService.login(
+                        LoginDto(
+                            user.email.uppercase(),
+                            password,
+                        ),
+                    )
+                val decodedToken = jwtDecoder.decode(tokenDto.accessToken).awaitSingle()
+                assertEquals(tokenDto.roles, tokenDto.roles)
+                assertEquals(user._id.toHexString(), decodedToken.subject)
+                assertEquals(
+                    user.roles.map { it.toString() },
+                    jwtClaimer.claimAuthorities(decodedToken),
                 )
+                val updatedUser = userRepository.findById(user._id)
+                assertNotNull(updatedUser)
+                assert(updatedUser.refreshTokens.isNotEmpty())
             }
 
         @Test
@@ -438,4 +443,57 @@ class UserServiceTest
                 assertNotNull(updatedUser?.logo)
             }
         }
+
+        @Test
+        fun `should refresh token successfully`() =
+            runTest {
+                val refreshToken = "token"
+                val user = createUser(refreshTokens = mapOf(Pair(refreshToken, Instant.now().plusSeconds(60L))))
+                val accessToken = jwtClaimer.createToken(user._id.toHexString(), emptyList())
+                val tokenDto = userService.refreshToken(RefreshTokenDto(accessToken, refreshToken))
+                jwtDecoder.decode(tokenDto.accessToken).awaitSingle()
+            }
+
+        @Test
+        fun `should not refresh token if refresh token is expired`() =
+            runTest {
+                val refreshToken = "token"
+                val user = createUser(refreshTokens = mapOf(Pair(refreshToken, Instant.now().minusSeconds(60L))))
+                val accessToken = jwtClaimer.createToken(user._id.toHexString(), emptyList())
+                assertThrows<ResponseStatusException> { userService.refreshToken(RefreshTokenDto(accessToken, refreshToken)) }.let {
+                    assertEquals(HttpStatus.UNAUTHORIZED, it.statusCode)
+                }
+            }
+
+        @Test
+        fun `should not refresh token if refresh token invalid`() =
+            runTest {
+                val user = createUser(refreshTokens = mapOf(Pair("token", Instant.now().plusSeconds(60L))))
+                val accessToken = jwtClaimer.createToken(user._id.toHexString(), emptyList())
+                assertThrows<ResponseStatusException> { userService.refreshToken(RefreshTokenDto(accessToken, "bad token")) }.let {
+                    assertEquals(HttpStatus.UNAUTHORIZED, it.statusCode)
+                }
+            }
+
+        @Test
+        fun `should not refresh token if access token invalid`() =
+            runTest {
+                val token = "token"
+                createUser(refreshTokens = mapOf(Pair(token, Instant.now().plusSeconds(60L))))
+                assertThrows<ResponseStatusException> { userService.refreshToken(RefreshTokenDto("bad access token", "token")) }.let {
+                    assertEquals(HttpStatus.UNAUTHORIZED, it.statusCode)
+                }
+            }
+
+        @Test
+        fun `should logout an user correctly`() =
+            runTest {
+                val refreshToken = "token"
+                val user = createUser(refreshTokens = mapOf(Pair(refreshToken, Instant.now().plusSeconds(60L))))
+                val accessToken = jwtClaimer.createToken(user._id.toHexString(), emptyList())
+                userService.logout(RefreshTokenDto(accessToken, refreshToken))
+                val updatedUser = userRepository.findById(user._id)
+                assertNotNull(updatedUser)
+                assertNull(updatedUser.refreshTokens[refreshToken])
+            }
     }

@@ -10,6 +10,7 @@ class SkateshopProperties(
 ) {
     class Security(
         val jwt: Jwt,
+        val refreshToken: VerificationKey,
         val verificationKey: VerificationKey,
     ) {
         class Jwt(
