@@ -7,15 +7,18 @@ import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
 import org.bson.types.ObjectId
+import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.http.codec.multipart.FilePart
 import org.springframework.web.bind.annotation.DeleteMapping
+import org.springframework.web.bind.annotation.PatchMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestPart
+import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
 
 @RestController
@@ -25,7 +28,8 @@ class ProductController(
 ) {
     @PostMapping(consumes = [MediaType.MULTIPART_FORM_DATA_VALUE])
     @Operation(summary = "Add a new product")
-    @ApiResponses(ApiResponse(responseCode = "200"))
+    @ResponseStatus(HttpStatus.CREATED)
+    @ApiResponses(ApiResponse(responseCode = "201"))
     suspend fun addProduct(
         @RequestPart("productDto") productDto: CreateProductDto,
         @RequestPart("picture") picture: FilePart,
@@ -33,8 +37,9 @@ class ProductController(
 
     @PutMapping("/{productId}")
     @Operation(summary = "Update a product")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
     @ApiResponses(
-        ApiResponse(responseCode = "200"),
+        ApiResponse(responseCode = "204"),
         ApiResponse(responseCode = "404", description = "Product not found"),
     )
     suspend fun updateProduct(
@@ -42,10 +47,11 @@ class ProductController(
         @RequestBody productDto: UpdateProductDto,
     ) = productService.updateProduct(productId, productDto)
 
-    @PutMapping("/{productId}/picture", consumes = [MediaType.MULTIPART_FORM_DATA_VALUE])
+    @PatchMapping("/{productId}/picture", consumes = [MediaType.MULTIPART_FORM_DATA_VALUE])
     @Operation(summary = "Update the picture of a product")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
     @ApiResponses(
-        ApiResponse(responseCode = "200"),
+        ApiResponse(responseCode = "204"),
         ApiResponse(responseCode = "404", description = "Product not found"),
     )
     suspend fun updateProductPicture(
@@ -55,6 +61,7 @@ class ProductController(
 
     @DeleteMapping("/{productId}")
     @Operation(summary = "Delete a product by ID")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
     @ApiResponses(
         ApiResponse(responseCode = "204"),
         ApiResponse(responseCode = "404", description = "Product not found"),

@@ -5,6 +5,7 @@ import java.time.Instant
 
 class CommandDto(
     val id: String,
+    val userId: String,
     val invoice: String,
     val date: Instant,
     val address: AddressDto,

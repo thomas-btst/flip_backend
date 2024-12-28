@@ -59,7 +59,7 @@ class ProductRepository(
         return mongoTemplate.updateFirst(query, update, Product::class.java).awaitSingle()
     }
 
-    override suspend fun updateProductPicture(
+    override suspend fun updatePicture(
         productId: ObjectId,
         picture: String,
     ): UpdateResult {

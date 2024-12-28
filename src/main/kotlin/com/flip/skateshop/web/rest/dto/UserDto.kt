@@ -35,3 +35,16 @@ class UpdateUserDto(
     @field:Valid
     val address: AddressDto,
 )
+
+class UserPageDto(
+    val users: List<ShortUserDto>,
+    val pages: Long,
+)
+
+class ShortUserDto(
+    val id: String,
+    val firstName: String,
+    val lastName: String,
+    val email: String,
+    val phone: String?,
+)

@@ -6,10 +6,14 @@ import com.flip.skateshop.domain.VerificationKey
 import com.flip.skateshop.interfaces.repository.UserRepositoryInterface
 import com.flip.skateshop.web.rest.dto.UpdateUserDto
 import com.mongodb.client.result.UpdateResult
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.reactive.asFlow
 import kotlinx.coroutines.reactive.awaitFirst
 import kotlinx.coroutines.reactive.awaitFirstOrNull
+import kotlinx.coroutines.reactive.awaitSingle
 import kotlinx.coroutines.reactor.awaitSingleOrNull
 import org.bson.types.ObjectId
+import org.springframework.data.domain.Sort
 import org.springframework.data.mapping.div
 import org.springframework.data.mapping.toDotPath
 import org.springframework.data.mongodb.core.ReactiveMongoTemplate
@@ -17,6 +21,7 @@ import org.springframework.data.mongodb.core.query.Criteria
 import org.springframework.data.mongodb.core.query.Query
 import org.springframework.data.mongodb.core.query.Update
 import org.springframework.data.mongodb.core.query.isEqualTo
+import org.springframework.data.mongodb.core.query.regex
 import org.springframework.data.mongodb.core.update
 import org.springframework.data.mongodb.core.updateFirst
 import org.springframework.data.repository.kotlin.CoroutineCrudRepository
@@ -211,7 +216,7 @@ class UserRepository(
         return mongoTemplate.updateFirst(query, update, User::class.java).awaitFirst()
     }
 
-    override suspend fun refreshTokenExistsAndNotExpired(
+    override suspend fun findByIdAndRefreshTokenExistsAndNotExpired(
         userId: ObjectId,
         token: String,
     ): User? {
@@ -221,5 +226,26 @@ class UserRepository(
                 addCriteria(Criteria.where("${User::refreshTokens.name}.$token").gte(Instant.now()))
             }
         return mongoTemplate.findOne(query, User::class.java).awaitFirstOrNull()
+    }
+
+    override suspend fun findByEmailLikeAndByPage(
+        limit: Int,
+        page: Long,
+        search: String,
+    ): Pair<Flow<User>, Long> {
+        val query =
+            Query().apply {
+                if (search.isNotEmpty()) {
+                    addCriteria(User::email regex "(?i).*$search.*")
+                }
+            }
+        val count = mongoTemplate.count(query, User::class.java).awaitSingle()
+        query.apply {
+            skip(limit * page)
+            limit(limit)
+            with(Sort.by(Sort.Direction.DESC, User::lastName.name))
+        }
+        val users = mongoTemplate.find(query.skip(limit * page).limit(limit), User::class.java).asFlow()
+        return Pair(users, count)
     }
 }

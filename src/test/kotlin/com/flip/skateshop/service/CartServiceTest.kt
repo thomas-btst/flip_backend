@@ -99,7 +99,7 @@ class CartServiceTest(
 
             val quantity = 8L
             coEvery { securityUtils.getCurrentUserId() } returns user._id
-            cartService.addProductToCart(product._id, quantity)
+            cartService.addProduct(product._id, quantity)
             val updatedUser = userRepository.findById(user._id)
             assertNotNull(updatedUser)
             assertEquals(quantity, updatedUser.cart[product._id])
@@ -110,7 +110,7 @@ class CartServiceTest(
         runTest {
             val user = createUser(cart = emptyMap())
             coEvery { securityUtils.getCurrentUserId() } returns user._id
-            assertThrows<ResponseStatusException> { cartService.addProductToCart(ObjectId(), 8L) }.let {
+            assertThrows<ResponseStatusException> { cartService.addProduct(ObjectId(), 8L) }.let {
                 assertEquals(it.statusCode, HttpStatus.NOT_FOUND)
             }
         }
@@ -121,7 +121,7 @@ class CartServiceTest(
             val productId = ObjectId()
             val user = createUser(cart = mapOf(Pair(productId, 8L)))
             coEvery { securityUtils.getCurrentUserId() } returns user._id
-            cartService.removeProductFromCart(productId)
+            cartService.removeProduct(productId)
             val updatedUser = userRepository.findById(user._id)
             assertNotNull(updatedUser)
             assertNull(updatedUser.cart[productId])
@@ -132,7 +132,7 @@ class CartServiceTest(
         runTest {
             val user = createUser(cart = emptyMap())
             coEvery { securityUtils.getCurrentUserId() } returns user._id
-            assertThrows<ResponseStatusException> { cartService.removeProductFromCart(ObjectId()) }.let {
+            assertThrows<ResponseStatusException> { cartService.removeProduct(ObjectId()) }.let {
                 assertEquals(it.statusCode, HttpStatus.NOT_FOUND)
             }
         }
@@ -191,7 +191,7 @@ class CartServiceTest(
                         ),
                 )
             coEvery { securityUtils.getCurrentUserId() } returns user._id
-            cartService.clearCartForCurrentUser()
+            cartService.clearCart()
             val foundUser = userRepository.findById(user._id)
             assertNotNull(foundUser)
             assert(foundUser.cart.isEmpty())

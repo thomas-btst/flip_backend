@@ -43,20 +43,21 @@ class CommandRepository(
         userId: ObjectId,
     ) = repository.findBy_idAndUserId(_id, userId)
 
-    override suspend fun cancelByIdAndUserId(
+    override suspend fun updateStatusByIdAndUserIdAndStatus(
         _id: ObjectId,
         userId: ObjectId,
-        status: CommandStatus,
+        oldStatus: CommandStatus,
+        newStatus: CommandStatus,
     ): UpdateResult {
         val query =
             Query().apply {
                 addCriteria(Command::_id isEqualTo _id)
                 addCriteria(Command::userId isEqualTo userId)
-                addCriteria(Command::status isEqualTo status)
+                addCriteria(Command::status isEqualTo oldStatus)
             }
         val update =
             Update().apply {
-                set(Command::status.name, CommandStatus.CANCELED)
+                set(Command::status.name, newStatus)
             }
         return mongoTemplate.updateFirst(query, update, Command::class.java).awaitFirst()
     }
@@ -86,7 +87,7 @@ class CommandRepository(
         return Pair(commands, count)
     }
 
-    override suspend fun updateCommandStatus(
+    override suspend fun updateStatusById(
         id: ObjectId,
         status: CommandStatus,
     ): UpdateResult {

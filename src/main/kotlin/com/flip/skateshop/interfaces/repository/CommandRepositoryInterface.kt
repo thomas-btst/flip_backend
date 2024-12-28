@@ -9,20 +9,14 @@ import org.bson.types.ObjectId
 interface CommandRepositoryInterface {
     suspend fun save(command: Command): Command
 
-    suspend fun findAllByUserId(userId: ObjectId): Flow<Command>
-
     suspend fun findById(_id: ObjectId): Command?
+
+    suspend fun findAllByUserId(userId: ObjectId): Flow<Command>
 
     suspend fun findByIdAndUserId(
         _id: ObjectId,
         userId: ObjectId,
     ): Command?
-
-    suspend fun cancelByIdAndUserId(
-        _id: ObjectId,
-        userId: ObjectId,
-        status: CommandStatus,
-    ): UpdateResult
 
     suspend fun findByNameLikeAndByStatusAndByPage(
         limit: Int,
@@ -31,7 +25,14 @@ interface CommandRepositoryInterface {
         status: CommandStatus?,
     ): Pair<Flow<Command>, Long>
 
-    suspend fun updateCommandStatus(
+    suspend fun updateStatusByIdAndUserIdAndStatus(
+        _id: ObjectId,
+        userId: ObjectId,
+        oldStatus: CommandStatus,
+        newStatus: CommandStatus,
+    ): UpdateResult
+
+    suspend fun updateStatusById(
         id: ObjectId,
         status: CommandStatus,
     ): UpdateResult

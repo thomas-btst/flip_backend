@@ -98,7 +98,7 @@ class CommandRepositoryTest(
         runTest {
             val command = command(status = CommandStatus.PENDING)
             commandRepository.save(command)
-            commandRepository.cancelByIdAndUserId(command._id, command.userId, CommandStatus.PENDING)
+            commandRepository.updateStatusByIdAndUserIdAndStatus(command._id, command.userId, CommandStatus.PENDING, CommandStatus.CANCELED)
             val foundCommand = commandRepository.findById(command._id)
             assertEquals(CommandStatus.CANCELED, foundCommand?.status)
         }
@@ -108,7 +108,7 @@ class CommandRepositoryTest(
         runTest {
             val command = command(status = CommandStatus.DELIVERED)
             commandRepository.save(command)
-            commandRepository.cancelByIdAndUserId(command._id, command.userId, CommandStatus.PENDING)
+            commandRepository.updateStatusByIdAndUserIdAndStatus(command._id, command.userId, CommandStatus.PENDING, CommandStatus.CANCELED)
             val foundCommand = commandRepository.findById(command._id)
             assertEquals(command.status, foundCommand?.status)
         }
@@ -119,7 +119,7 @@ class CommandRepositoryTest(
             val command = command(status = CommandStatus.PENDING)
             commandRepository.save(command)
             val newStatus = CommandStatus.DELIVERED
-            commandRepository.updateCommandStatus(command._id, newStatus)
+            commandRepository.updateStatusById(command._id, newStatus)
             val foundCommand = commandRepository.findById(command._id)
             assertEquals(newStatus, foundCommand?.status)
         }

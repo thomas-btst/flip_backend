@@ -18,8 +18,12 @@ import com.flip.skateshop.web.rest.dto.LoginDto
 import com.flip.skateshop.web.rest.dto.RefreshTokenDto
 import com.flip.skateshop.web.rest.dto.RegisterDto
 import com.flip.skateshop.web.rest.dto.ResetPasswordDto
+import com.flip.skateshop.web.rest.dto.ShortUserDto
 import com.flip.skateshop.web.rest.dto.TokenDto
 import com.flip.skateshop.web.rest.dto.UpdateUserDto
+import com.flip.skateshop.web.rest.dto.UserPageDto
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.reactive.awaitFirst
 import kotlinx.coroutines.reactive.awaitSingle
 import org.bson.types.ObjectId
@@ -53,17 +57,24 @@ class UserService(
 ) : UserServiceInterface {
     override suspend fun getCurrentUser(): User {
         val currentUserId = securityUtils.getCurrentUserId()
-        return userRepository.findById(currentUserId)!!
+        return userRepository.findById(currentUserId) ?: throw ResponseStatusException(HttpStatus.UNAUTHORIZED, "User deleted")
     }
 
-    override suspend fun updateCurrentUserProfile(userDto: UpdateUserDto) {
+    override suspend fun updateProfileForCurrentUser(userDto: UpdateUserDto) {
         userRepository.updateUserProfile(
             securityUtils.getCurrentUserId(),
             userMapper.toValidUpdateUserDto(userDto),
         )
     }
 
-    override suspend fun updateCurrentUserLogo(logo: FilePart) {
+    override suspend fun getUser(userId: ObjectId): ShortUserDto {
+        val user =
+            userRepository.findById(userId)
+                ?: throw ResponseStatusException(HttpStatus.NOT_FOUND, "User not found")
+        return userMapper.toShortUserDto(user)
+    }
+
+    override suspend fun updateLogoForCurrentUser(logo: FilePart) {
         val userId = securityUtils.getCurrentUserId()
         val path = fileService.putUserLogo(userId, logo)
         userRepository.updateUserLogo(userId, path)
@@ -123,7 +134,7 @@ class UserService(
     override suspend fun refreshToken(refreshTokenDto: RefreshTokenDto): AccessTokenDto {
         val token = decodeAccessToken(refreshTokenDto.accessToken)
         val user =
-            userRepository.refreshTokenExistsAndNotExpired(ObjectId(token.subject), refreshTokenDto.refreshToken)
+            userRepository.findByIdAndRefreshTokenExistsAndNotExpired(ObjectId(token.subject), refreshTokenDto.refreshToken)
                 ?: throw ResponseStatusException(HttpStatus.UNAUTHORIZED, "Refresh token invalid or expired")
         return AccessTokenDto(createAccessToken(user._id, user.roles.toList()))
     }
@@ -168,5 +179,20 @@ class UserService(
                 passwordEncoder.encode(reset.newPassword),
             ) ?: throw ResponseStatusException(HttpStatus.FORBIDDEN)
         return createTokens(user._id, user.roles.toList())
+    }
+
+    override suspend fun getUsersByPage(
+        limit: Int,
+        page: Long,
+        search: String,
+    ): UserPageDto {
+        val userPage = userRepository.findByEmailLikeAndByPage(limit, page, search)
+        val pages =
+            if (limit > 0) {
+                (userPage.second + limit - 1) / limit
+            } else {
+                0L
+            }
+        return UserPageDto(userPage.first.map(userMapper::toShortUserDto).toList(), pages)
     }
 }

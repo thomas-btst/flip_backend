@@ -10,21 +10,21 @@ import org.bson.types.ObjectId
 interface ProductRepositoryInterface {
     suspend fun save(product: Product): Product
 
+    suspend fun count(): Long
+
+    suspend fun findById(id: ObjectId): Product?
+
+    suspend fun deleteById(productId: ObjectId)
+
     suspend fun updateProduct(
         productId: ObjectId,
         productDto: UpdateProductDto,
     ): UpdateResult
 
-    suspend fun updateProductPicture(
+    suspend fun updatePicture(
         productId: ObjectId,
         picture: String,
     ): UpdateResult
-
-    suspend fun deleteById(productId: ObjectId)
-
-    suspend fun count(): Long
-
-    suspend fun findById(id: ObjectId): Product?
 
     suspend fun findByNameLikeAndByTypeAndByPage(
         limit: Int,

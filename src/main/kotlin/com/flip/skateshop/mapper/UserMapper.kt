@@ -6,6 +6,7 @@ import com.flip.skateshop.domain.VerificationKey
 import com.flip.skateshop.extention.normalizedEmail
 import com.flip.skateshop.web.rest.dto.AddressDto
 import com.flip.skateshop.web.rest.dto.RegisterDto
+import com.flip.skateshop.web.rest.dto.ShortUserDto
 import com.flip.skateshop.web.rest.dto.UpdateUserDto
 import com.flip.skateshop.web.rest.dto.UserDto
 import org.bson.types.ObjectId
@@ -76,5 +77,10 @@ class UserMapper(
                     address.city.trim().replaceFirstChar { it.uppercase() },
                 ),
             )
+        }
+
+    fun toShortUserDto(user: User): ShortUserDto =
+        user.run {
+            ShortUserDto(_id.toHexString(), firstName, lastName, email, phone)
         }
 }

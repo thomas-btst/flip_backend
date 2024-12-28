@@ -131,7 +131,7 @@ class CommandService(
         return commands.map(commandMapper::toShortCommandDto).toList().reversed()
     }
 
-    override suspend fun getCommandByIdForCurrentUser(id: ObjectId): CommandDto {
+    override suspend fun getCommandForCurrentUser(id: ObjectId): CommandDto {
         val currentUserId = securityUtils.getCurrentUserId()
         val command =
             commandRepository.findByIdAndUserId(id, currentUserId)
@@ -140,7 +140,7 @@ class CommandService(
         return commandMapper.toCommandDto(command, products.toList())
     }
 
-    override suspend fun getCommandByIdForUser(id: ObjectId): CommandDto {
+    override suspend fun getCommand(id: ObjectId): CommandDto {
         val command =
             commandRepository.findById(id)
                 ?: throw ResponseStatusException(HttpStatus.NOT_FOUND, "Command with id $id not found")
@@ -150,7 +150,7 @@ class CommandService(
 
     override suspend fun cancelCommandForCurrentUser(id: ObjectId) {
         val currentUserId = securityUtils.getCurrentUserId()
-        val result = commandRepository.cancelByIdAndUserId(id, currentUserId, CommandStatus.PENDING)
+        val result = commandRepository.updateStatusByIdAndUserIdAndStatus(id, currentUserId, CommandStatus.PENDING, CommandStatus.CANCELED)
         if (result.matchedCount < 1) {
             throw ResponseStatusException(HttpStatus.NOT_FOUND, "Command not found or not pending")
         }
@@ -181,7 +181,7 @@ class CommandService(
         commandId: ObjectId,
         commandStatus: CommandStatus,
     ) {
-        val result = commandRepository.updateCommandStatus(commandId, commandStatus)
+        val result = commandRepository.updateStatusById(commandId, commandStatus)
         if (result.matchedCount < 1) {
             throw ResponseStatusException(HttpStatus.NOT_FOUND, "Command with id $commandId not found")
         }

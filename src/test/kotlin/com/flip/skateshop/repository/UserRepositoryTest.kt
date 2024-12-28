@@ -10,6 +10,7 @@ import com.flip.skateshop.util.ServicesCleaner
 import com.flip.skateshop.web.rest.dto.AddressDto
 import com.flip.skateshop.web.rest.dto.UpdateUserDto
 import com.github.javafaker.Faker
+import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.test.runTest
 import org.bson.types.ObjectId
 import org.junit.jupiter.api.Test
@@ -437,7 +438,7 @@ class UserRepositoryTest(
                         ),
                 )
             userRepository.save(user)
-            assertNotNull(userRepository.refreshTokenExistsAndNotExpired(user._id, token))
+            assertNotNull(userRepository.findByIdAndRefreshTokenExistsAndNotExpired(user._id, token))
         }
 
     @Test
@@ -451,7 +452,7 @@ class UserRepositoryTest(
                         ),
                 )
             userRepository.save(user)
-            assertNull(userRepository.refreshTokenExistsAndNotExpired(user._id, "bad token"))
+            assertNull(userRepository.findByIdAndRefreshTokenExistsAndNotExpired(user._id, "bad token"))
         }
 
     @Test
@@ -466,6 +467,74 @@ class UserRepositoryTest(
                         ),
                 )
             userRepository.save(user)
-            assertNull(userRepository.refreshTokenExistsAndNotExpired(user._id, token))
+            assertNull(userRepository.findByIdAndRefreshTokenExistsAndNotExpired(user._id, token))
+        }
+
+    @Test
+    fun `should find all users by page correctly`() =
+        runTest {
+            val limit = 20
+            val count = 30L
+            for (i in 1..count) {
+                userRepository.save(user())
+            }
+
+            val firstPagination =
+                userRepository.findByEmailLikeAndByPage(
+                    limit,
+                    0,
+                    "",
+                )
+            val secondPagination =
+                userRepository.findByEmailLikeAndByPage(
+                    limit,
+                    1,
+                    "",
+                )
+
+            assertEquals(limit, firstPagination.first.toList().size)
+            assertEquals(count.toInt() - limit, secondPagination.first.toList().size)
+            assertEquals(count, firstPagination.second)
+            assertEquals(count, secondPagination.second)
+        }
+
+    fun `should search by email successfully in pagination`() =
+        runTest {
+            userRepository.save(user(email = "email@email.com"))
+            userRepository.save(user(email = "test@test.com"))
+
+            val findAll =
+                userRepository
+                    .findByEmailLikeAndByPage(
+                        5,
+                        0,
+                        "",
+                    ).first
+
+            val findEmailBegin =
+                userRepository.findByEmailLikeAndByPage(
+                    5,
+                    0,
+                    "email",
+                )
+
+            val findEmailEnd =
+                userRepository.findByEmailLikeAndByPage(
+                    5,
+                    0,
+                    "email.com",
+                )
+
+            val findEmailMiddle =
+                userRepository.findByEmailLikeAndByPage(
+                    5,
+                    0,
+                    "email.",
+                )
+
+            assertEquals(2, findAll.toList().size)
+            assertEquals(1, findEmailBegin.toList().size)
+            assertEquals(1, findEmailEnd.toList().size)
+            assertEquals(1, findEmailMiddle.toList().size)
         }
 }

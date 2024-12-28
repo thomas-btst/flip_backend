@@ -29,7 +29,7 @@ class CartService(
         return cartMapper.toCartDto(user.cart, products.toList())
     }
 
-    override suspend fun addProductToCart(
+    override suspend fun addProduct(
         productId: ObjectId,
         quantity: Long,
     ) {
@@ -42,7 +42,7 @@ class CartService(
         }
     }
 
-    override suspend fun removeProductFromCart(productId: ObjectId) {
+    override suspend fun removeProduct(productId: ObjectId) {
         val result = userRepository.removeFromCart(securityUtils.getCurrentUserId(), productId)
         if (result.modifiedCount < 1) {
             throw ResponseStatusException(HttpStatus.NOT_FOUND, "Product not found in cart")
@@ -54,7 +54,7 @@ class CartService(
         return CartQuantityDto(user.cart.get(productId) ?: 0)
     }
 
-    override suspend fun clearCartForCurrentUser() {
+    override suspend fun clearCart() {
         val userId = securityUtils.getCurrentUserId()
         userRepository.clearCart(userId)
     }

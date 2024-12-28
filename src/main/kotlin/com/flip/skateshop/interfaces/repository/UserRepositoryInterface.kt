@@ -3,6 +3,7 @@ package com.flip.skateshop.interfaces.repository
 import com.flip.skateshop.domain.User
 import com.flip.skateshop.web.rest.dto.UpdateUserDto
 import com.mongodb.client.result.UpdateResult
+import kotlinx.coroutines.flow.Flow
 import org.bson.types.ObjectId
 import java.time.Instant
 
@@ -70,8 +71,14 @@ interface UserRepositoryInterface {
         token: String,
     ): UpdateResult
 
-    suspend fun refreshTokenExistsAndNotExpired(
+    suspend fun findByIdAndRefreshTokenExistsAndNotExpired(
         userId: ObjectId,
         token: String,
     ): User?
+
+    suspend fun findByEmailLikeAndByPage(
+        limit: Int,
+        page: Long,
+        search: String,
+    ): Pair<Flow<User>, Long>
 }

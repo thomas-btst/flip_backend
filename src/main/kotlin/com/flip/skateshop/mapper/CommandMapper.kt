@@ -45,6 +45,7 @@ class CommandMapper(
         command.run {
             CommandDto(
                 _id.toHexString(),
+                command.userId.toHexString(),
                 fileMapper.toPublicPath(invoice),
                 date,
                 address.run {

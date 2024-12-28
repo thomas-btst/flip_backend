@@ -254,7 +254,7 @@ class CommandServiceTest(
             val userId = ObjectId()
             val command = createCommand(userId = userId)
             coEvery { securityUtils.getCurrentUserId() } returns userId
-            val foundCommand = commandService.getCommandByIdForCurrentUser(command._id)
+            val foundCommand = commandService.getCommandForCurrentUser(command._id)
             assertNotNull(foundCommand)
         }
 
@@ -263,7 +263,7 @@ class CommandServiceTest(
         runTest {
             val command = createCommand()
             coEvery { securityUtils.getCurrentUserId() } returns ObjectId()
-            assertThrows<ResponseStatusException> { commandService.getCommandByIdForCurrentUser(command._id) }.let {
+            assertThrows<ResponseStatusException> { commandService.getCommandForCurrentUser(command._id) }.let {
                 assertEquals(HttpStatus.NOT_FOUND, it.statusCode)
             }
         }
@@ -273,7 +273,7 @@ class CommandServiceTest(
         runTest {
             val command = createCommand()
             coEvery { securityUtils.getCurrentUserId() } returns ObjectId()
-            val foundCommand = commandService.getCommandByIdForUser(command._id)
+            val foundCommand = commandService.getCommand(command._id)
             assertNotNull(foundCommand)
         }
 

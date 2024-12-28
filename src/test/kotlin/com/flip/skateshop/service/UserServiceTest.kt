@@ -412,7 +412,7 @@ class UserServiceTest
                         ),
                     )
                 coEvery { securityUtils.getCurrentUserId() } returns user._id
-                userService.updateCurrentUserProfile(updateUserDto)
+                userService.updateProfileForCurrentUser(updateUserDto)
                 val updatedUser = userRepository.findById(user._id)
                 assertNotNull(updatedUser)
                 updateUserDto.run {
@@ -436,7 +436,7 @@ class UserServiceTest
                 val logo = mockk<FilePart>()
                 coEvery { securityUtils.getCurrentUserId() } returns user._id
 
-                userService.updateCurrentUserLogo(logo)
+                userService.updateLogoForCurrentUser(logo)
 
                 val updatedUser = userRepository.findById(user._id)
                 coVerify { fileService.putUserLogo(user._id, logo) }
@@ -495,5 +495,33 @@ class UserServiceTest
                 val updatedUser = userRepository.findById(user._id)
                 assertNotNull(updatedUser)
                 assertNull(updatedUser.refreshTokens[refreshToken])
+            }
+
+        @Test
+        fun `should paginate users correctly`() =
+            runTest {
+                val limit = 20
+                val count = 30
+                for (i in 1..count) {
+                    createUser()
+                }
+
+                val firstPagination =
+                    userService.getUsersByPage(
+                        limit,
+                        0,
+                        "",
+                    )
+                val secondPagination =
+                    userService.getUsersByPage(
+                        limit,
+                        1,
+                        "",
+                    )
+
+                assertEquals(limit, firstPagination.users.size)
+                assertEquals(count - limit, secondPagination.users.size)
+                assertEquals(2, firstPagination.pages)
+                assertEquals(2, secondPagination.pages)
             }
     }

@@ -95,7 +95,7 @@ class ProductRepositoryTest(
             val product = product(picture = "/path/to/file")
             productRepository.save(product)
             val newPath = "/new/path/to/file"
-            productRepository.updateProductPicture(product._id, newPath)
+            productRepository.updatePicture(product._id, newPath)
             val updatedProduct = productRepository.findById(product._id)
             assertNotNull(updatedProduct)
             assertEquals(newPath, updatedProduct.picture)

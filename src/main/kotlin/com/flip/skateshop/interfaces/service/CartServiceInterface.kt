@@ -7,14 +7,14 @@ import org.bson.types.ObjectId
 interface CartServiceInterface {
     suspend fun getCart(): CartDto
 
-    suspend fun addProductToCart(
+    suspend fun addProduct(
         productId: ObjectId,
         quantity: Long,
     )
 
-    suspend fun removeProductFromCart(productId: ObjectId)
+    suspend fun removeProduct(productId: ObjectId)
 
     suspend fun getCartQuantity(productId: ObjectId): CartQuantityDto
 
-    suspend fun clearCartForCurrentUser()
+    suspend fun clearCart()
 }

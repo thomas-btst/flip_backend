@@ -96,7 +96,7 @@ class ProductService(
                 ?: throw ResponseStatusException(HttpStatus.NOT_FOUND, "Product with id $productId does not exist")
         fileService.deleteFile(oldProduct.picture)
         val newPicture = fileService.putProductPicture(productId, picture)
-        productRepository.updateProductPicture(productId, newPicture)
+        productRepository.updatePicture(productId, newPicture)
     }
 
     override suspend fun deleteProduct(productId: ObjectId) {

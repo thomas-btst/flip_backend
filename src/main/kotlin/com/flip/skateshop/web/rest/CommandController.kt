@@ -10,6 +10,7 @@ import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
 import org.bson.types.ObjectId
+import org.springframework.http.HttpStatus
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PatchMapping
 import org.springframework.web.bind.annotation.PathVariable
@@ -17,6 +18,7 @@ import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
+import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
 
 @RestController
@@ -26,31 +28,43 @@ class CommandController(
 ) {
     @PostMapping
     @Operation(summary = "Create a command")
+    @ResponseStatus(HttpStatus.CREATED)
     @ApiResponses(
-        ApiResponse(responseCode = "200", description = "Command created"),
+        ApiResponse(responseCode = "201", description = "Command created"),
         ApiResponse(responseCode = "409", description = "Cart is empty or address is not set"),
     )
     suspend fun addCommand(): String = commandService.addCommandForCurrentUser().toHexString()
 
     @GetMapping
-    @Operation(summary = "List commands for user")
+    @Operation(summary = "List commands current for user")
     @ApiResponses(ApiResponse(responseCode = "200"))
-    suspend fun listCommands(): List<ShortCommandDto> = commandService.listCommandsForCurrentUser()
+    suspend fun listCommandsForCurrentUser(): List<ShortCommandDto> = commandService.listCommandsForCurrentUser()
+
+    @GetMapping("/users/{userId}")
+    @Operation(summary = "List commands for user")
+    @ApiResponses(
+        ApiResponse(responseCode = "200"),
+        ApiResponse(responseCode = "404", description = "User not found"),
+    )
+    suspend fun listCommands(
+        @PathVariable userId: ObjectId,
+    ): List<ShortCommandDto> = commandService.listCommandsForCurrentUser()
 
     @GetMapping("/{commandId}")
-    @Operation(summary = "Get a command by its id for an user")
+    @Operation(summary = "Get a command by its id for current user")
     @ApiResponses(
         ApiResponse(responseCode = "200"),
         ApiResponse(responseCode = "404", description = "Command not found"),
     )
     suspend fun getCommand(
         @PathVariable commandId: ObjectId,
-    ): CommandDto = commandService.getCommandByIdForCurrentUser(commandId)
+    ): CommandDto = commandService.getCommandForCurrentUser(commandId)
 
     @PatchMapping("/{commandId}/cancel")
     @Operation(summary = "Cancel a pending command")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
     @ApiResponses(
-        ApiResponse(responseCode = "200"),
+        ApiResponse(responseCode = "204"),
         ApiResponse(responseCode = "404", description = "Command not found or not pending"),
     )
     suspend fun cancelCommand(
@@ -75,12 +89,13 @@ class CommandController(
     )
     suspend fun getCommandById(
         @PathVariable commandId: ObjectId,
-    ): CommandDto = commandService.getCommandByIdForUser(commandId)
+    ): CommandDto = commandService.getCommand(commandId)
 
-    @PatchMapping("/{commandId}")
+    @PatchMapping("/{commandId}/status")
     @Operation(summary = "Change a command status")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
     @ApiResponses(
-        ApiResponse(responseCode = "200"),
+        ApiResponse(responseCode = "204"),
         ApiResponse(responseCode = "404", description = "Command not found"),
     )
     suspend fun changeCommandStatus(
