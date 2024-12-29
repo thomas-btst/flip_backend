@@ -17,26 +17,42 @@ class CommandMapper(
     private val fileMapper: FileMapper,
     private val productMapper: ProductMapper,
 ) {
-    fun toCommand(
+    fun toUnpaidCommand(
         commandId: ObjectId,
+        paymentId: String,
         userId: ObjectId,
         cart: Map<ObjectId, Long>,
         products: List<Product>,
-        invoice: String,
         address: Address,
         date: Instant,
         total: Long,
     ): Command =
-        Command(
+        Command.UnPaid(
             commandId,
+            paymentId,
             userId,
-            invoice,
             date,
             address,
             cart.filter { products.firstOrNull { product -> product._id == it.key } !== null },
             total,
-            CommandStatus.PENDING,
         )
+
+    fun toPaidCommand(
+        command: Command,
+        invoice: String,
+    ) = command.run {
+        Command.Paid(
+            _id,
+            paymentId,
+            userId,
+            invoice,
+            CommandStatus.PENDING,
+            date,
+            address,
+            products,
+            total,
+        )
+    }
 
     fun toCommandDto(
         command: Command,
@@ -46,7 +62,7 @@ class CommandMapper(
             CommandDto(
                 _id.toHexString(),
                 command.userId.toHexString(),
-                fileMapper.toPublicPath(invoice),
+                if (this is Command.Paid) fileMapper.toPublicPath(invoice) else null,
                 date,
                 address.run {
                     AddressDto(line1, line2, zipCode, city)
@@ -56,7 +72,7 @@ class CommandMapper(
                     CommandProductDto(cartProduct.toHexString(), product?.let(productMapper::toProductDto), quantity)
                 },
                 total,
-                status,
+                if (this is Command.Paid) status else null,
             )
         }
 
@@ -64,9 +80,9 @@ class CommandMapper(
         command.run {
             ShortCommandDto(
                 _id.toHexString(),
-                fileMapper.toPublicPath(invoice),
+                if (this is Command.Paid) fileMapper.toPublicPath(invoice) else null,
                 date,
-                status,
+                if (this is Command.Paid) status else null,
                 command.total,
             )
         }

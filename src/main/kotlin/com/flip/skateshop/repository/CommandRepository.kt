@@ -11,6 +11,7 @@ import kotlinx.coroutines.reactive.awaitSingle
 import org.bson.types.ObjectId
 import org.springframework.data.domain.Sort
 import org.springframework.data.mongodb.core.ReactiveMongoTemplate
+import org.springframework.data.mongodb.core.query.Criteria
 import org.springframework.data.mongodb.core.query.Query
 import org.springframework.data.mongodb.core.query.Update
 import org.springframework.data.mongodb.core.query.isEqualTo
@@ -25,6 +26,11 @@ interface CommandCRUDRepository : CoroutineCrudRepository<Command, ObjectId> {
         _id: ObjectId,
         userId: ObjectId,
     ): Command?
+
+    suspend fun findByPaymentIdAndUserId(
+        paymentId: String,
+        userId: ObjectId,
+    ): Command?
 }
 
 @Repository
@@ -33,6 +39,11 @@ class CommandRepository(
     private val mongoTemplate: ReactiveMongoTemplate,
 ) : CommandRepositoryInterface {
     override suspend fun save(command: Command) = repository.save(command)
+
+    override suspend fun findByPaymentIdAndUserId(
+        paymentId: String,
+        userId: ObjectId,
+    ): Command? = repository.findByPaymentIdAndUserId(paymentId, userId)
 
     override suspend fun findAllByUserId(userId: ObjectId) = repository.findAllByUserId(userId)
 
@@ -43,7 +54,7 @@ class CommandRepository(
         userId: ObjectId,
     ) = repository.findBy_idAndUserId(_id, userId)
 
-    override suspend fun updateStatusByIdAndUserIdAndStatus(
+    override suspend fun updatePaidCommandStatusByIdAndUserIdAndStatus(
         _id: ObjectId,
         userId: ObjectId,
         oldStatus: CommandStatus,
@@ -51,13 +62,14 @@ class CommandRepository(
     ): UpdateResult {
         val query =
             Query().apply {
+                addCriteria(Criteria.where("_class").`is`(Command.Paid.CLASS_NAME))
                 addCriteria(Command::_id isEqualTo _id)
                 addCriteria(Command::userId isEqualTo userId)
-                addCriteria(Command::status isEqualTo oldStatus)
+                addCriteria(Command.Paid::status isEqualTo oldStatus)
             }
         val update =
             Update().apply {
-                set(Command::status.name, newStatus)
+                set(Command.Paid::status.name, newStatus)
             }
         return mongoTemplate.updateFirst(query, update, Command::class.java).awaitFirst()
     }
@@ -74,7 +86,7 @@ class CommandRepository(
                     addCriteria(Command::_id isEqualTo search)
                 }
                 if (status != null) {
-                    addCriteria(Command::status isEqualTo status)
+                    addCriteria(Command.Paid::status isEqualTo status)
                 }
             }
         val count = mongoTemplate.count(query, Command::class.java).awaitSingle()
@@ -87,17 +99,18 @@ class CommandRepository(
         return Pair(commands, count)
     }
 
-    override suspend fun updateStatusById(
+    override suspend fun updatePaidCommandStatusById(
         id: ObjectId,
         status: CommandStatus,
     ): UpdateResult {
         val query =
             Query().apply {
+                addCriteria(Criteria.where("_class").`is`(Command.Paid.CLASS_NAME))
                 addCriteria(Command::_id isEqualTo id)
             }
         val update =
             Update().apply {
-                set(Command::status.name, status)
+                set(Command.Paid::status.name, status)
             }
         return mongoTemplate.updateFirst(query, update, Command::class.java).awaitSingle()
     }

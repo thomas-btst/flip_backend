@@ -5,10 +5,10 @@ import com.flip.skateshop.domain.Product
 import com.flip.skateshop.domain.RoleEnum
 import com.flip.skateshop.domain.User
 import com.flip.skateshop.domain.VerificationKey
+import com.flip.skateshop.interfaces.repository.ProductRepositoryInterface
+import com.flip.skateshop.interfaces.repository.UserRepositoryInterface
 import com.flip.skateshop.interfaces.service.UserServiceInterface
 import com.flip.skateshop.mapper.CartMapper
-import com.flip.skateshop.repository.ProductRepository
-import com.flip.skateshop.repository.UserRepository
 import com.flip.skateshop.security.SecurityUtils
 import com.flip.skateshop.util.ServicesCleaner
 import io.mockk.coEvery
@@ -27,9 +27,9 @@ import kotlin.test.assertNull
 
 class CartServiceTest(
     @Autowired
-    private val userRepository: UserRepository,
+    private val userRepository: UserRepositoryInterface,
     @Autowired
-    private val productRepository: ProductRepository,
+    private val productRepository: ProductRepositoryInterface,
     @Autowired
     private val cartMapper: CartMapper,
 ) : ServicesCleaner() {

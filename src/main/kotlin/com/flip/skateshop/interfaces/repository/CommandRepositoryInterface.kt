@@ -9,6 +9,11 @@ import org.bson.types.ObjectId
 interface CommandRepositoryInterface {
     suspend fun save(command: Command): Command
 
+    suspend fun findByPaymentIdAndUserId(
+        paymentId: String,
+        userId: ObjectId,
+    ): Command?
+
     suspend fun findById(_id: ObjectId): Command?
 
     suspend fun findAllByUserId(userId: ObjectId): Flow<Command>
@@ -25,14 +30,14 @@ interface CommandRepositoryInterface {
         status: CommandStatus?,
     ): Pair<Flow<Command>, Long>
 
-    suspend fun updateStatusByIdAndUserIdAndStatus(
+    suspend fun updatePaidCommandStatusByIdAndUserIdAndStatus(
         _id: ObjectId,
         userId: ObjectId,
         oldStatus: CommandStatus,
         newStatus: CommandStatus,
     ): UpdateResult
 
-    suspend fun updateStatusById(
+    suspend fun updatePaidCommandStatusById(
         id: ObjectId,
         status: CommandStatus,
     ): UpdateResult

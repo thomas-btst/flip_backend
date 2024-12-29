@@ -26,14 +26,21 @@ import org.springframework.web.bind.annotation.RestController
 class CommandController(
     private val commandService: CommandServiceInterface,
 ) {
-    @PostMapping
-    @Operation(summary = "Create a command")
+    @PostMapping("/sessions")
+    @Operation(summary = "Create a command payment session")
     @ResponseStatus(HttpStatus.CREATED)
     @ApiResponses(
         ApiResponse(responseCode = "201", description = "Command created"),
         ApiResponse(responseCode = "409", description = "Cart is empty or address is not set"),
     )
-    suspend fun addCommand(): String = commandService.addCommandForCurrentUser().toHexString()
+    suspend fun iniCommand(): String = commandService.initCommandForCurrentUser()
+
+    @PostMapping("/sessions/{sessionId}")
+    @Operation(summary = "Finalize command for a session")
+    @ApiResponses(ApiResponse(responseCode = "200", description = "Session has been finalized"))
+    suspend fun finalizeCommand(
+        @PathVariable sessionId: String,
+    ) = commandService.finalizeCommandForCurrentUser(sessionId)
 
     @GetMapping
     @Operation(summary = "List commands current for user")

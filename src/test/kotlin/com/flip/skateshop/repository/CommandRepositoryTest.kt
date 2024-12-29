@@ -5,6 +5,7 @@ import com.flip.skateshop.domain.Command
 import com.flip.skateshop.domain.CommandStatus
 import com.flip.skateshop.interfaces.repository.CommandRepositoryInterface
 import com.flip.skateshop.util.ServicesCleaner
+import com.mongodb.internal.operation.retry.AttachmentKeys.command
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.test.runTest
 import org.bson.types.ObjectId
@@ -19,8 +20,9 @@ class CommandRepositoryTest(
     @Autowired
     private val commandRepository: CommandRepositoryInterface,
 ) : ServicesCleaner() {
-    fun command(
+    fun paidCommand(
         id: ObjectId = ObjectId(),
+        invoiceId: String = ObjectId().toHexString(),
         userId: ObjectId = ObjectId(),
         invoice: String = "/path/to/invoice",
         date: Instant = Instant.now(),
@@ -34,28 +36,32 @@ class CommandRepositoryTest(
         products: Map<ObjectId, Long> = emptyMap(),
         total: Long = 8L,
         status: CommandStatus = CommandStatus.PENDING,
-    ) = Command(
+    ) = Command.Paid(
         id,
+        invoiceId,
         userId,
         invoice,
+        status,
         date,
         address,
         products,
         total,
-        status,
     )
 
     @Test
     fun `should save and retrieve a command successfully`() =
         runTest {
-            val command = command()
+            val command = paidCommand()
             commandRepository.save(command)
             val updatedCommand = commandRepository.findById(command._id)
             assertNotNull(updatedCommand)
             updatedCommand.run {
+                assert(this is Command.Paid)
                 assertEquals(_id, command._id)
                 assertEquals(userId, command.userId)
-                assertEquals(invoice, command.invoice)
+                if (this is Command.Paid) {
+                    assertEquals(invoice, command.invoice)
+                }
                 address.run {
                     assertEquals(line1, command.address.line1)
                     assertEquals(line2, command.address.line2)
@@ -65,7 +71,9 @@ class CommandRepositoryTest(
                 assertEquals(products.size, command.products.size)
                 products.forEach { (productId, quantity) -> assertEquals(quantity, command.products.get(productId)) }
                 assertEquals(total, command.total)
-                assertEquals(status, command.status)
+                if (this is Command.Paid) {
+                    assertEquals(status, command.status)
+                }
             }
         }
 
@@ -75,10 +83,10 @@ class CommandRepositoryTest(
             val userId = ObjectId()
             val count = 10
             for (i in 1..count) {
-                commandRepository.save(command(userId = userId))
+                commandRepository.save(paidCommand(userId = userId))
             }
             for (i in 1..20) {
-                commandRepository.save(command())
+                commandRepository.save(paidCommand())
             }
             val commands = commandRepository.findAllByUserId(userId)
             assertEquals(count, commands.toList().size)
@@ -87,7 +95,7 @@ class CommandRepositoryTest(
     @Test
     fun `should retrieve a command by userId and commandId correctly`() =
         runTest {
-            val command = command()
+            val command = paidCommand()
             commandRepository.save(command)
             assertNotNull(commandRepository.findByIdAndUserId(command._id, command.userId))
             assertNull(commandRepository.findByIdAndUserId(command._id, ObjectId()))
@@ -96,32 +104,93 @@ class CommandRepositoryTest(
     @Test
     fun `should cancel a command successfully`() =
         runTest {
-            val command = command(status = CommandStatus.PENDING)
+            val command = paidCommand(status = CommandStatus.PENDING)
             commandRepository.save(command)
-            commandRepository.updateStatusByIdAndUserIdAndStatus(command._id, command.userId, CommandStatus.PENDING, CommandStatus.CANCELED)
+            commandRepository.updatePaidCommandStatusByIdAndUserIdAndStatus(
+                command._id,
+                command.userId,
+                CommandStatus.PENDING,
+                CommandStatus.CANCELED,
+            )
             val foundCommand = commandRepository.findById(command._id)
-            assertEquals(CommandStatus.CANCELED, foundCommand?.status)
+            assert(foundCommand is Command.Paid)
+            if (foundCommand is Command.Paid) {
+                assertEquals(CommandStatus.CANCELED, foundCommand.status)
+            }
         }
 
     @Test
     fun `should not cancel a not pending command`() =
         runTest {
-            val command = command(status = CommandStatus.DELIVERED)
+            val command = paidCommand(status = CommandStatus.DELIVERED)
             commandRepository.save(command)
-            commandRepository.updateStatusByIdAndUserIdAndStatus(command._id, command.userId, CommandStatus.PENDING, CommandStatus.CANCELED)
+            commandRepository.updatePaidCommandStatusByIdAndUserIdAndStatus(
+                command._id,
+                command.userId,
+                CommandStatus.PENDING,
+                CommandStatus.CANCELED,
+            )
             val foundCommand = commandRepository.findById(command._id)
-            assertEquals(command.status, foundCommand?.status)
+            assert(foundCommand is Command.Paid)
+            if (foundCommand is Command.Paid) {
+                assertEquals(command.status, foundCommand.status)
+            }
+        }
+
+    @Test
+    fun `should not cancel unpaid command status`() =
+        runTest {
+            val command =
+                Command.UnPaid(
+                    ObjectId(),
+                    "",
+                    ObjectId(),
+                    Instant.now(),
+                    Address("", "", "", ""),
+                    emptyMap(),
+                    0L,
+                )
+            commandRepository.save(command)
+            val result =
+                commandRepository.updatePaidCommandStatusByIdAndUserIdAndStatus(
+                    command._id,
+                    command.userId,
+                    CommandStatus.PENDING,
+                    CommandStatus.CANCELED,
+                )
+            assertEquals(0, result.matchedCount)
         }
 
     @Test
     fun `should update command status successfully`() =
         runTest {
-            val command = command(status = CommandStatus.PENDING)
+            val command = paidCommand(status = CommandStatus.PENDING)
             commandRepository.save(command)
             val newStatus = CommandStatus.DELIVERED
-            commandRepository.updateStatusById(command._id, newStatus)
+            commandRepository.updatePaidCommandStatusById(command._id, newStatus)
             val foundCommand = commandRepository.findById(command._id)
-            assertEquals(newStatus, foundCommand?.status)
+            assert(foundCommand is Command.Paid)
+            if (foundCommand is Command.Paid) {
+                assertEquals(newStatus, foundCommand.status)
+            }
+        }
+
+    @Test
+    fun `should not update unpaid command status`() =
+        runTest {
+            val command =
+                Command.UnPaid(
+                    ObjectId(),
+                    "",
+                    ObjectId(),
+                    Instant.now(),
+                    Address("", "", "", ""),
+                    emptyMap(),
+                    0L,
+                )
+            commandRepository.save(command)
+            val result = commandRepository.updatePaidCommandStatusById(command._id, CommandStatus.CANCELED)
+            assertEquals(0, result.matchedCount)
         }
 
     @Test
@@ -130,7 +199,7 @@ class CommandRepositoryTest(
             val limit = 20
             val count = 30L
             for (i in 1..count) {
-                commandRepository.save(command())
+                commandRepository.save(paidCommand())
             }
 
             val firstPagination =

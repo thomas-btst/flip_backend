@@ -41,6 +41,8 @@ resilience4j.ratelimiter:
       timeoutDuration: 500ms
 
 skateshop:
+  client:
+    url: http://localhost:5173
   logo: https://example.com/logo.jpeg
   security:
     jwt:
@@ -50,7 +52,8 @@ skateshop:
       validity-in-seconds: 604800
     verification-key:
       validity-in-seconds: 180
-
+  stripe:
+    privateKey: sk_test_51000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
   minio:
     access-key: minioadmin
     bucket: flip

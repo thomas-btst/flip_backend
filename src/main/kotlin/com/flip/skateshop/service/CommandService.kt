@@ -2,6 +2,7 @@ package com.flip.skateshop.service
 
 import com.flip.skateshop.config.SkateshopProperties
 import com.flip.skateshop.domain.Address
+import com.flip.skateshop.domain.Command
 import com.flip.skateshop.domain.CommandStatus
 import com.flip.skateshop.domain.User
 import com.flip.skateshop.interfaces.repository.CommandRepositoryInterface
@@ -10,6 +11,7 @@ import com.flip.skateshop.interfaces.repository.UserRepositoryInterface
 import com.flip.skateshop.interfaces.service.CommandServiceInterface
 import com.flip.skateshop.interfaces.service.FileServiceInterface
 import com.flip.skateshop.interfaces.service.MailServiceInterface
+import com.flip.skateshop.interfaces.service.PaymentServiceInterface
 import com.flip.skateshop.interfaces.service.UserServiceInterface
 import com.flip.skateshop.mapper.CommandMapper
 import com.flip.skateshop.security.SecurityUtils
@@ -29,7 +31,6 @@ import java.time.Instant
 import java.time.LocalDateTime
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
-import kotlin.math.round
 
 @Service
 class CommandService(
@@ -43,6 +44,7 @@ class CommandService(
     private val securityUtils: SecurityUtils,
     private val userRepository: UserRepositoryInterface,
     private val mailService: MailServiceInterface,
+    private val paymentService: PaymentServiceInterface,
 ) : CommandServiceInterface {
     companion object {
         const val INVOICE_RESOURCE_DIR = "invoice"
@@ -72,15 +74,11 @@ class CommandService(
             },
         )
 
-    override suspend fun addCommandForCurrentUser(): ObjectId {
+    override suspend fun initCommandForCurrentUser(): String {
         val user = userService.getCurrentUser()
-        val commandId = ObjectId()
-        val date = Instant.now()
-
         if (user.address == null) {
             throw ResponseStatusException(HttpStatus.CONFLICT, "Address must be added before adding a command")
         }
-
         if (user.cart.isEmpty()) {
             throw ResponseStatusException(HttpStatus.CONFLICT, "Cart is empty")
         }
@@ -92,37 +90,71 @@ class CommandService(
                 if (product == null) {
                     emptyList()
                 } else {
-                    val unitPriceTTC = product.price.toDouble() / 100
-                    val unitPriceHT = round((unitPriceTTC / 120) * 10000) / 100
-                    val price = round(unitPriceTTC * quantity * 100) / 100
-                    listOf(InvoiceItem(product.name, quantity, unitPriceHT, unitPriceTTC, price))
+                    listOf(Pair(product, quantity))
                 }
             }
         if (items.isEmpty()) {
             throw ResponseStatusException(HttpStatus.CONFLICT, "Cart is empty")
         }
-        val total: Long =
-            (
-                items
-                    .map { item ->
-                        item.totalPrice
-                    }.reduce { total, price -> total + price } * 100
-            ).toLong()
 
-        val invoice = generateInvoice(ObjectId(), user, user.address, items, date, total.toDouble() / 100)
+        val commandId = ObjectId()
+        val date = Instant.now()
+        val session = paymentService.createSession(items, user.email)
+        val command =
+            commandMapper.toUnpaidCommand(
+                commandId,
+                session.id,
+                user._id,
+                user.cart,
+                products,
+                user.address,
+                date,
+                session.amountTotal,
+            )
+        commandRepository.save(command)
+        userRepository.clearCart(user._id)
+        return session.rawJsonObject["client_secret"].asString
+    }
+
+    override suspend fun finalizeCommandForCurrentUser(sessionId: String): String {
+        val user = userService.getCurrentUser()
+        val command =
+            commandRepository.findByPaymentIdAndUserId(sessionId, user._id)
+                ?: throw ResponseStatusException(HttpStatus.NOT_FOUND, "Session not found")
+        if (command !is Command.UnPaid) {
+            throw ResponseStatusException(HttpStatus.GONE, "Command already finalized")
+        }
+
+        val session = paymentService.retrieveSession(sessionId)
+
+        if (session.status != "complete") {
+            throw ResponseStatusException(HttpStatus.CONFLICT, "Payment session not completed")
+        }
+
+        val items =
+            session.lineItems.data.map { line ->
+                InvoiceItem(
+                    line.price.productObject.name,
+                    line.quantity,
+                    (line.price.unitAmount * 100 / 120).toDouble() / 100,
+                    line.price.unitAmount.toDouble() / 100,
+                    line.amountTotal.toDouble() / 100,
+                )
+            }
+
+        val invoice = generateInvoice(ObjectId(), user, command.address, items, command.date, session.amountTotal.toDouble() / 100)
         val invoiceKey =
             fileService.putCommandInvoice(
                 user._id,
-                commandId,
+                command._id,
                 "invoice.html",
                 invoice.toByteArray(),
                 MediaType.TEXT_HTML.toString(),
             )
-        val command = commandMapper.toCommand(commandId, user._id, user.cart, products, invoiceKey, user.address, date, total)
-        commandRepository.save(command)
-        userRepository.clearCart(user._id)
+        val paidCommand = commandMapper.toPaidCommand(command, invoiceKey)
+        commandRepository.save(paidCommand)
         mailService.sendCommandConfirmation(user.email, user.firstName, user.lastName, command._id.toHexString(), invoice)
-        return commandId
+        return command._id.toHexString()
     }
 
     override suspend fun listCommandsForCurrentUser(): List<ShortCommandDto> {
@@ -150,7 +182,13 @@ class CommandService(
 
     override suspend fun cancelCommandForCurrentUser(id: ObjectId) {
         val currentUserId = securityUtils.getCurrentUserId()
-        val result = commandRepository.updateStatusByIdAndUserIdAndStatus(id, currentUserId, CommandStatus.PENDING, CommandStatus.CANCELED)
+        val result =
+            commandRepository.updatePaidCommandStatusByIdAndUserIdAndStatus(
+                id,
+                currentUserId,
+                CommandStatus.PENDING,
+                CommandStatus.CANCELED,
+            )
         if (result.matchedCount < 1) {
             throw ResponseStatusException(HttpStatus.NOT_FOUND, "Command not found or not pending")
         }
@@ -181,7 +219,7 @@ class CommandService(
         commandId: ObjectId,
         commandStatus: CommandStatus,
     ) {
-        val result = commandRepository.updateStatusById(commandId, commandStatus)
+        val result = commandRepository.updatePaidCommandStatusById(commandId, commandStatus)
         if (result.matchedCount < 1) {
             throw ResponseStatusException(HttpStatus.NOT_FOUND, "Command with id $commandId not found")
         }

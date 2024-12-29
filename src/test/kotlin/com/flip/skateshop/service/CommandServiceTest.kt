@@ -10,14 +10,17 @@ import com.flip.skateshop.domain.User
 import com.flip.skateshop.domain.VerificationKey
 import com.flip.skateshop.interfaces.repository.CommandRepositoryInterface
 import com.flip.skateshop.interfaces.repository.ProductRepositoryInterface
+import com.flip.skateshop.interfaces.repository.UserRepositoryInterface
 import com.flip.skateshop.interfaces.service.FileServiceInterface
 import com.flip.skateshop.interfaces.service.MailServiceInterface
+import com.flip.skateshop.interfaces.service.PaymentServiceInterface
 import com.flip.skateshop.interfaces.service.UserServiceInterface
 import com.flip.skateshop.mapper.CommandMapper
-import com.flip.skateshop.repository.UserRepository
 import com.flip.skateshop.security.SecurityUtils
 import com.flip.skateshop.util.ServicesCleaner
+import com.stripe.model.checkout.Session
 import io.mockk.coEvery
+import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.test.runTest
 import org.bson.types.ObjectId
@@ -45,13 +48,16 @@ class CommandServiceTest(
     @Autowired
     private val properties: SkateshopProperties,
     @Autowired
-    private val userRepository: UserRepository,
+    private val userRepository: UserRepositoryInterface,
 ) : ServicesCleaner() {
     private val mailService = mockk<MailServiceInterface>(relaxed = true)
 
     private val userService = mockk<UserServiceInterface>()
 
     private val securityUtils = mockk<SecurityUtils>()
+
+    private val paymentService = mockk<PaymentServiceInterface>(relaxed = true)
+
     val commandService =
         CommandService(
             productRepository,
@@ -64,6 +70,7 @@ class CommandServiceTest(
             securityUtils,
             userRepository,
             mailService,
+            paymentService,
         )
 
     suspend fun createUser(
@@ -124,6 +131,7 @@ class CommandServiceTest(
 
     suspend fun createCommand(
         id: ObjectId = ObjectId(),
+        paymentId: String = ObjectId().toHexString(),
         userId: ObjectId = ObjectId(),
         invoice: String = "/path/to/invoice",
         date: Instant = Instant.now(),
@@ -138,25 +146,42 @@ class CommandServiceTest(
         total: Long = 8L,
         status: CommandStatus = CommandStatus.PENDING,
     ) = commandRepository.save(
-        Command(
+        Command.Paid(
             id,
+            paymentId,
             userId,
             invoice,
+            status,
             date,
             address,
             products,
             total,
-            status,
         ),
     )
 
     @Test
-    fun `should add command for current an user correctly`() =
+    fun `should init command correctly`() =
+        runTest {
+            val product = createProduct()
+            val user =
+                createUser(
+                    cart = mapOf(Pair(product._id, 8L)),
+                )
+            coEvery { userService.getCurrentUser() } returns user
+            commandService.initCommandForCurrentUser()
+            val updateUser = userRepository.findById(user._id)
+            assertNotNull(updateUser)
+            assert(updateUser.cart.isEmpty())
+        }
+
+    @Test
+    fun `should finalize command for current user correctly`() =
         runTest {
             val product1 = createProduct()
             val quantity1 = 8L
             val quantity2 = 1L
             val product2 = createProduct()
+            val sessionId = "sessionId"
             val user =
                 createUser(
                     address =
@@ -166,36 +191,39 @@ class CommandServiceTest(
                             "13000",
                             "Marseille",
                         ),
-                    cart =
-                        mapOf(
-                            Pair(product1._id, quantity1),
-                            Pair(product2._id, quantity2),
-                            Pair(ObjectId(), 3L),
-                        ),
                 )
+            val command =
+                Command.UnPaid(
+                    ObjectId(),
+                    sessionId,
+                    user._id,
+                    Instant.now(),
+                    user.address!!,
+                    mapOf(Pair(product1._id, quantity1), Pair(product2._id, quantity2)),
+                    8L,
+                )
+            val session = mockk<Session>(relaxed = true)
+            commandRepository.save(command)
             coEvery { userService.getCurrentUser() } returns user
-            val commandId = commandService.addCommandForCurrentUser()
-            val command = commandRepository.findById(commandId)
-            assertNotNull(command)
-            command.run {
-                assertEquals(commandId, _id)
-                assertEquals(user._id, command.userId)
+            every { paymentService.retrieveSession(sessionId) } returns session
+            every { session.status } returns "complete"
+            val commandId = commandService.finalizeCommandForCurrentUser(sessionId)
+            val updatedCommand = commandRepository.findById(ObjectId(commandId))
+            assertNotNull(updatedCommand)
+            updatedCommand.run {
+                assertEquals(commandId, _id.toHexString())
+                assertEquals(user._id, updatedCommand.userId)
                 user.address?.run {
                     assertEquals(line1, address.line1)
                     assertEquals(line2, address.line2)
                     assertEquals(zipCode, address.zipCode)
                     assertEquals(city, address.city)
                 }
-                assertEquals(2, products.size)
-                products.forEach { (productId, quantity) ->
-                    assertEquals(user.cart[productId], quantity)
+                assert(this is Command.Paid)
+                if (this is Command.Paid) {
+                    assertEquals(CommandStatus.PENDING, status)
                 }
-                assertEquals(product1.price * quantity1 + product2.price * quantity2, total)
-                assertEquals(CommandStatus.PENDING, status)
             }
-            val updatedUser = userRepository.findById(user._id)
-            assertNotNull(updatedUser)
-            assert(updatedUser.cart.isEmpty())
         }
 
     @Test
@@ -213,7 +241,7 @@ class CommandServiceTest(
                     cart = emptyMap(),
                 )
             coEvery { userService.getCurrentUser() } returns user
-            assertThrows<ResponseStatusException> { commandService.addCommandForCurrentUser() }.let {
+            assertThrows<ResponseStatusException> { commandService.initCommandForCurrentUser() }.let {
                 assertEquals(HttpStatus.CONFLICT, it.statusCode)
             }
         }
@@ -227,7 +255,7 @@ class CommandServiceTest(
                     cart = mapOf(Pair(ObjectId(), 1L)),
                 )
             coEvery { userService.getCurrentUser() } returns user
-            assertThrows<ResponseStatusException> { commandService.addCommandForCurrentUser() }.let {
+            assertThrows<ResponseStatusException> { commandService.initCommandForCurrentUser() }.let {
                 assertEquals(HttpStatus.CONFLICT, it.statusCode)
             }
         }
@@ -286,7 +314,10 @@ class CommandServiceTest(
             commandService.cancelCommandForCurrentUser(command._id)
             val updatedCommand = commandRepository.findById(command._id)
             assertNotNull(updatedCommand)
-            assertEquals(CommandStatus.CANCELED, updatedCommand.status)
+            assert(updatedCommand is Command.Paid)
+            if (updatedCommand is Command.Paid) {
+                assertEquals(CommandStatus.CANCELED, updatedCommand.status)
+            }
         }
 
     @Test
@@ -308,6 +339,9 @@ class CommandServiceTest(
             commandService.updateCommandStatus(command._id, CommandStatus.IN_TRANSIT)
             val updatedCommand = commandRepository.findById(command._id)
             assertNotNull(updatedCommand)
-            assertEquals(CommandStatus.IN_TRANSIT, updatedCommand.status)
+            assert(updatedCommand is Command.Paid)
+            if (updatedCommand is Command.Paid) {
+                assertEquals(CommandStatus.IN_TRANSIT, updatedCommand.status)
+            }
         }
 }

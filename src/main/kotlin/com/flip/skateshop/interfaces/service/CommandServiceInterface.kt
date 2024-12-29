@@ -7,7 +7,9 @@ import com.flip.skateshop.web.rest.dto.ShortCommandDto
 import org.bson.types.ObjectId
 
 interface CommandServiceInterface {
-    suspend fun addCommandForCurrentUser(): ObjectId
+    suspend fun initCommandForCurrentUser(): String
+
+    suspend fun finalizeCommandForCurrentUser(sessionId: String): String
 
     suspend fun listCommandsForCurrentUser(): List<ShortCommandDto>
 
