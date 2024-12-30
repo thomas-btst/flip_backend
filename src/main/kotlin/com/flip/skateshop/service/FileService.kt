@@ -1,18 +1,22 @@
 package com.flip.skateshop.service
 
+import com.flip.skateshop.config.MinioConfig.Companion.PRIVATE_ROOT
 import com.flip.skateshop.config.MinioConfig.Companion.PUBLIC_ROOT
 import com.flip.skateshop.config.SkateshopProperties
 import com.flip.skateshop.extention.toByteArray
 import com.flip.skateshop.interfaces.service.FileServiceInterface
+import io.minio.GetPresignedObjectUrlArgs
 import io.minio.MinioAsyncClient
 import io.minio.ObjectWriteResponse
 import io.minio.PutObjectArgs
 import io.minio.RemoveObjectArgs
+import io.minio.http.Method
 import kotlinx.coroutines.future.await
 import org.bson.types.ObjectId
 import org.springframework.http.codec.multipart.FilePart
 import org.springframework.stereotype.Service
 import java.io.ByteArrayInputStream
+import java.util.concurrent.*
 
 @Service
 class FileService(
@@ -26,8 +30,8 @@ class FileService(
         const val USER_ROOT = "users"
         const val INVOICE_ROOT = "$USER_ROOT/%s/invoices"
         const val PRODUCT_PICTURE_PREFIX = "$PUBLIC_ROOT/$PRODUCT_ROOT/%s/pictures"
-        const val USER_LOGO_PREFIX = "$PUBLIC_ROOT/$USER_ROOT/%s/logos"
-        const val COMMAND_INVOICE_PREFIX = "$PUBLIC_ROOT/$INVOICE_ROOT/%s"
+        const val USER_LOGO_PREFIX = "$PRIVATE_ROOT/$USER_ROOT/%s/logos"
+        const val COMMAND_INVOICE_PREFIX = "$PRIVATE_ROOT/$INVOICE_ROOT/%s"
     }
 
     override suspend fun putUserLogo(
@@ -82,7 +86,7 @@ class FileService(
                     bucket(properties.bucket)
                     `object`(key)
                 }.build()
-        minioClient.removeObject(request)
+        minioClient.removeObject(request).await()
     }
 
     private suspend fun putFile(
@@ -100,5 +104,17 @@ class FileService(
                     stream(ByteArrayInputStream(data), data.size.toLong(), -1L)
                 }.build()
         return minioClient.putObject(request).await()
+    }
+
+    override suspend fun signUrl(fileKey: String): String {
+        val request =
+            GetPresignedObjectUrlArgs
+                .builder()
+                .method(Method.GET)
+                .bucket(properties.bucket)
+                .`object`(fileKey)
+                .expiry(1, TimeUnit.HOURS)
+                .build()
+        return minioClient.getPresignedObjectUrl(request)
     }
 }

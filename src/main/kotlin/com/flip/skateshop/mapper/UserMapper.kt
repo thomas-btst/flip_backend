@@ -44,7 +44,7 @@ class UserMapper(
         )
     }
 
-    fun toUserDto(user: User): UserDto =
+    suspend fun toUserDto(user: User): UserDto =
         user.run {
             UserDto(
                 _id.toHexString(),
@@ -60,7 +60,7 @@ class UserMapper(
                         city,
                     )
                 },
-                logo?.let(fileMapper::toPublicPath),
+                logo?.let { fileMapper.toPrivatePath(it) },
             )
         }
 

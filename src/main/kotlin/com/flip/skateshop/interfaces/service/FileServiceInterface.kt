@@ -37,4 +37,6 @@ interface FileServiceInterface {
     ): String
 
     suspend fun deleteFile(key: String)
+
+    suspend fun signUrl(fileKey: String): String
 }

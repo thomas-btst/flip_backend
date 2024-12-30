@@ -33,7 +33,7 @@ class FileServiceTest(
             val userId = ObjectId()
             val picture = ClassPathResource("picture/logo.jpeg").file.readBytes()
             val key = fileService.putUserLogo(userId, "picture", picture, MediaType.IMAGE_JPEG.toString())
-            ImageIO.read(URL(fileMapper.toPublicPath(key)))
+            ImageIO.read(URL(fileMapper.toPrivatePath(key)))
         }
 
     @Test
@@ -60,6 +60,6 @@ class FileServiceTest(
                     invoice.toByteArray(),
                     MediaType.TEXT_HTML.toString(),
                 )
-            ImageIO.read(URL(fileMapper.toPublicPath(key)))
+            ImageIO.read(URL(fileMapper.toPrivatePath(key)))
         }
 }

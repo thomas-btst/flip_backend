@@ -54,7 +54,7 @@ class CommandMapper(
         )
     }
 
-    fun toCommandDto(
+    suspend fun toCommandDto(
         command: Command,
         products: List<Product>,
     ): CommandDto =
@@ -62,7 +62,7 @@ class CommandMapper(
             CommandDto(
                 _id.toHexString(),
                 command.userId.toHexString(),
-                if (this is Command.Paid) fileMapper.toPublicPath(invoice) else null,
+                if (this is Command.Paid) fileMapper.toPrivatePath(invoice) else null,
                 date,
                 address.run {
                     AddressDto(line1, line2, zipCode, city)
@@ -76,11 +76,11 @@ class CommandMapper(
             )
         }
 
-    fun toShortCommandDto(command: Command): ShortCommandDto =
+    suspend fun toShortCommandDto(command: Command): ShortCommandDto =
         command.run {
             ShortCommandDto(
                 _id.toHexString(),
-                if (this is Command.Paid) fileMapper.toPublicPath(invoice) else null,
+                if (this is Command.Paid) fileMapper.toPrivatePath(invoice) else null,
                 date,
                 if (this is Command.Paid) status else null,
                 command.total,
