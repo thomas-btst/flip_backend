@@ -13,6 +13,8 @@ interface CommandServiceInterface {
 
     suspend fun listCommandsForCurrentUser(): List<ShortCommandDto>
 
+    suspend fun listCommandsForUser(userId: ObjectId): List<ShortCommandDto>
+
     suspend fun getCommandForCurrentUser(id: ObjectId): CommandDto
 
     suspend fun getCommand(id: ObjectId): CommandDto

@@ -37,7 +37,12 @@ class CommandController(
 
     @PostMapping("/sessions/{sessionId}")
     @Operation(summary = "Finalize command for a session")
-    @ApiResponses(ApiResponse(responseCode = "200", description = "Session has been finalized"))
+    @ApiResponses(
+        ApiResponse(responseCode = "200", description = "Session has been finalized"),
+        ApiResponse(responseCode = "404", description = "Session not found"),
+        ApiResponse(responseCode = "409", description = "Payment session not completed"),
+        ApiResponse(responseCode = "410", description = "Command already finalized"),
+    )
     suspend fun finalizeCommand(
         @PathVariable sessionId: String,
     ) = commandService.finalizeCommandForCurrentUser(sessionId)
@@ -49,13 +54,10 @@ class CommandController(
 
     @GetMapping("/users/{userId}")
     @Operation(summary = "List commands for user")
-    @ApiResponses(
-        ApiResponse(responseCode = "200"),
-        ApiResponse(responseCode = "404", description = "User not found"),
-    )
+    @ApiResponses(ApiResponse(responseCode = "200"))
     suspend fun listCommands(
         @PathVariable userId: ObjectId,
-    ): List<ShortCommandDto> = commandService.listCommandsForCurrentUser()
+    ): List<ShortCommandDto> = commandService.listCommandsForUser(userId)
 
     @GetMapping("/{commandId}")
     @Operation(summary = "Get a command by its id for current user")

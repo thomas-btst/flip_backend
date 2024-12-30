@@ -55,7 +55,7 @@ class UserController(
     @GetMapping("/limit/{limit}/page/{page}")
     @Operation(summary = "Retrieve a pagination of users by email")
     @ApiResponses(ApiResponse(responseCode = "200"))
-    suspend fun getProductsByPage(
+    suspend fun getUsersByPage(
         @PathVariable limit: Int,
         @PathVariable page: Long,
         @RequestParam search: String = "",

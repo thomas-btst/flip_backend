@@ -163,6 +163,11 @@ class CommandService(
         return commands.map(commandMapper::toShortCommandDto).toList().reversed()
     }
 
+    override suspend fun listCommandsForUser(userId: ObjectId): List<ShortCommandDto> {
+        val commands = commandRepository.findAllByUserId(userId)
+        return commands.map(commandMapper::toShortCommandDto).toList().reversed()
+    }
+
     override suspend fun getCommandForCurrentUser(id: ObjectId): CommandDto {
         val currentUserId = securityUtils.getCurrentUserId()
         val command =

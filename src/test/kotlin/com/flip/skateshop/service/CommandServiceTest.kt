@@ -344,4 +344,18 @@ class CommandServiceTest(
                 assertEquals(CommandStatus.IN_TRANSIT, updatedCommand.status)
             }
         }
+
+    @Test
+    fun `should list commands for an user correctly`() =
+        runTest {
+            val command = createCommand(status = CommandStatus.PENDING)
+            createCommand(status = CommandStatus.PENDING)
+            val commands = commandService.listCommandsForUser(command.userId)
+            assertEquals(1, commands.size)
+            commands.first().apply {
+                assertEquals(command._id.toHexString(), id)
+                assertEquals(CommandStatus.PENDING, status)
+                assertEquals(command.total, total)
+            }
+        }
 }
