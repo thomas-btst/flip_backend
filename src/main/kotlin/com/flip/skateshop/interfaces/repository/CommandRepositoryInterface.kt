@@ -2,6 +2,10 @@ package com.flip.skateshop.interfaces.repository
 
 import com.flip.skateshop.domain.Command
 import com.flip.skateshop.domain.CommandStatus
+import com.flip.skateshop.repository.CommandsStats
+import com.flip.skateshop.repository.CommandsStatsMonth
+import com.flip.skateshop.repository.CommandsStatusStats
+import com.flip.skateshop.repository.CommandsTopProducts
 import com.mongodb.client.result.UpdateResult
 import kotlinx.coroutines.flow.Flow
 import org.bson.types.ObjectId
@@ -41,4 +45,12 @@ interface CommandRepositoryInterface {
         id: ObjectId,
         status: CommandStatus,
     ): UpdateResult
+
+    suspend fun getStatusStats(): Flow<CommandsStatusStats>
+
+    suspend fun getStats(): CommandsStats
+
+    suspend fun getStatsByMonth(): Flow<CommandsStatsMonth>
+
+    suspend fun getTopProducts(): Flow<CommandsTopProducts>
 }

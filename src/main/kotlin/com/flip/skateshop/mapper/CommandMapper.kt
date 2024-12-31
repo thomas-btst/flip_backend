@@ -4,13 +4,22 @@ import com.flip.skateshop.domain.Address
 import com.flip.skateshop.domain.Command
 import com.flip.skateshop.domain.CommandStatus
 import com.flip.skateshop.domain.Product
+import com.flip.skateshop.repository.CommandsStats
+import com.flip.skateshop.repository.CommandsStatsMonth
+import com.flip.skateshop.repository.CommandsStatusStats
+import com.flip.skateshop.repository.CommandsTopProducts
 import com.flip.skateshop.web.rest.dto.AddressDto
 import com.flip.skateshop.web.rest.dto.CommandDto
 import com.flip.skateshop.web.rest.dto.CommandProductDto
+import com.flip.skateshop.web.rest.dto.CommandsStatsDto
+import com.flip.skateshop.web.rest.dto.CommandsStatsMonthDto
+import com.flip.skateshop.web.rest.dto.CommandsTopProductDto
 import com.flip.skateshop.web.rest.dto.ShortCommandDto
+import kotlinx.coroutines.flow.map
 import org.bson.types.ObjectId
 import org.springframework.stereotype.Component
 import java.time.Instant
+import java.time.YearMonth
 
 @Component
 class CommandMapper(
@@ -86,4 +95,32 @@ class CommandMapper(
                 command.total,
             )
         }
+
+    suspend fun toCommandsStatsDto(
+        stats: CommandsStats,
+        monthStats: List<CommandsStatsMonth>,
+        statusStats: List<CommandsStatusStats>,
+        topProducts: List<CommandsTopProducts>,
+        products: List<Product>,
+    ) = stats.run {
+        CommandsStatsDto(
+            count,
+            total,
+            statusStats.firstOrNull { it._id == CommandStatus.DELIVERED }?.count
+                ?: 0,
+            statusStats.firstOrNull { it._id == CommandStatus.CANCELED }?.count
+                ?: 0,
+            monthStats.map { stat ->
+                CommandsStatsMonthDto(YearMonth.of(stat._id.year, stat._id.month), stat.count, stat.total)
+            },
+            topProducts.map {
+                val product = products.firstOrNull { product -> product._id == it._id }
+                CommandsTopProductDto(
+                    it._id.toHexString(),
+                    it.count,
+                    product?.let(productMapper::toProductDto),
+                )
+            },
+        )
+    }
 }

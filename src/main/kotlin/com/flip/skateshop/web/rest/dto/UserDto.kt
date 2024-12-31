@@ -48,3 +48,7 @@ class ShortUserDto(
     val email: String,
     val phone: String?,
 )
+
+class UsersStatsDto(
+    val count: Long,
+)

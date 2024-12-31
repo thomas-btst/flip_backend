@@ -7,10 +7,16 @@ import com.mongodb.client.result.UpdateResult
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.reactive.asFlow
 import kotlinx.coroutines.reactive.awaitFirst
+import kotlinx.coroutines.reactive.awaitFirstOrDefault
 import kotlinx.coroutines.reactive.awaitSingle
 import org.bson.types.ObjectId
 import org.springframework.data.domain.Sort
+import org.springframework.data.mapping.div
+import org.springframework.data.mapping.toDotPath
 import org.springframework.data.mongodb.core.ReactiveMongoTemplate
+import org.springframework.data.mongodb.core.aggregate
+import org.springframework.data.mongodb.core.aggregation.Aggregation
+import org.springframework.data.mongodb.core.aggregation.ObjectOperators
 import org.springframework.data.mongodb.core.query.Criteria
 import org.springframework.data.mongodb.core.query.Query
 import org.springframework.data.mongodb.core.query.Update
@@ -33,11 +39,41 @@ interface CommandCRUDRepository : CoroutineCrudRepository<Command, ObjectId> {
     ): Command?
 }
 
+class CommandsStatsMonth(
+    val _id: Id,
+    val count: Long,
+    val total: Long,
+) {
+    class Id(
+        val year: Int,
+        val month: Int,
+    )
+}
+
+class CommandsStatusStats(
+    val _id: CommandStatus,
+    val count: Long,
+)
+
+class CommandsTopProducts(
+    val _id: ObjectId,
+    val count: Long,
+)
+
+class CommandsStats(
+    val total: Long,
+    val count: Long,
+)
+
 @Repository
 class CommandRepository(
     private val repository: CommandCRUDRepository,
     private val mongoTemplate: ReactiveMongoTemplate,
 ) : CommandRepositoryInterface {
+    companion object {
+        val matchPaid = Aggregation.match(Criteria.where("_class").`is`(Command.Paid.CLASS_NAME))
+    }
+
     override suspend fun save(command: Command) = repository.save(command)
 
     override suspend fun findByPaymentIdAndUserId(
@@ -113,5 +149,92 @@ class CommandRepository(
                 set(Command.Paid::status.name, status)
             }
         return mongoTemplate.updateFirst(query, update, Command::class.java).awaitSingle()
+    }
+
+    override suspend fun getStats(): CommandsStats {
+        val groupAll =
+            Aggregation
+                .group()
+                .sum(Command::total.name)
+                .`as`(CommandsStats::total.name)
+                .count()
+                .`as`(CommandsStats::count.name)
+        val aggregation =
+            Aggregation.newAggregation(
+                matchPaid,
+                groupAll,
+            )
+        return mongoTemplate.aggregate<CommandsStats>(aggregation, Command.DOCUMENT_NAME).awaitFirstOrDefault(CommandsStats(0L, 0L))
+    }
+
+    override suspend fun getStatusStats(): Flow<CommandsStatusStats> {
+        val groupByStatus = Aggregation.group(Command.Paid::status.name).count().`as`(CommandsStatusStats::count.name)
+
+        val aggregation =
+            Aggregation.newAggregation(
+                matchPaid,
+                groupByStatus,
+            )
+        return mongoTemplate.aggregate<CommandsStatusStats>(aggregation, Command.DOCUMENT_NAME).asFlow()
+    }
+
+    override suspend fun getStatsByMonth(): Flow<CommandsStatsMonth> {
+        val project =
+            Aggregation
+                .project()
+                .andExpression("month(${Command::date.name})")
+                .`as`(CommandsStatsMonth.Id::month.name)
+                .andExpression("year(${Command::date.name})")
+                .`as`(CommandsStatsMonth.Id::year.name)
+                .and(Command::total.name)
+                .`as`(CommandsStatsMonth::total.name)
+        val groupByDate =
+            Aggregation
+                .group(CommandsStatsMonth.Id::year.name, CommandsStatsMonth.Id::month.name)
+                .count()
+                .`as`(CommandsStatsMonth::count.name)
+                .sum(Command::total.name)
+                .`as`(CommandsStatsMonth::total.name)
+        val sort =
+            Aggregation.sort(Sort.Direction.ASC, (CommandsStatsMonth::_id / CommandsStatsMonth.Id::year).toDotPath()).and(
+                Sort.Direction.ASC,
+                (
+                    CommandsStatsMonth::_id /
+                        CommandsStatsMonth.Id::month
+                ).toDotPath(),
+            )
+
+        val aggregation =
+            Aggregation.newAggregation(
+                matchPaid,
+                project,
+                groupByDate,
+                sort,
+            )
+        return mongoTemplate.aggregate<CommandsStatsMonth>(aggregation, Command.DOCUMENT_NAME).asFlow()
+    }
+
+    override suspend fun getTopProducts(): Flow<CommandsTopProducts> {
+        val projectToArray =
+            Aggregation
+                .project()
+                .and(
+                    ObjectOperators
+                        .valueOf(Command::products.name)
+                        .toArray(),
+                ).`as`("products")
+        val unwindProducts = Aggregation.unwind("products")
+        val groupByProductId = Aggregation.group("products.k").sum("products.v").`as`(CommandsTopProducts::count.name)
+        val sortByCount = Aggregation.sort(Sort.Direction.DESC, CommandsTopProducts::count.name)
+        val aggregation =
+            Aggregation.newAggregation(
+                matchPaid,
+                projectToArray,
+                unwindProducts,
+                groupByProductId,
+                sortByCount,
+                Aggregation.limit(3),
+            )
+        return mongoTemplate.aggregate<CommandsTopProducts>(aggregation, Command.DOCUMENT_NAME).asFlow()
     }
 }

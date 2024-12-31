@@ -81,6 +81,7 @@ class SecurityConfig(
                 authorize(pathMatchers(HttpMethod.GET, "/commands/limit/{limit}/page/{page}"), hasAuthority(ADMIN))
                 authorize(pathMatchers(HttpMethod.GET, "/commands/admin/{commandId}"), hasAuthority(ADMIN))
                 authorize(pathMatchers(HttpMethod.PATCH, "/commands/{commandId}/status"), hasAuthority(ADMIN))
+                authorize(pathMatchers(HttpMethod.GET, "/commands/stats"), hasAuthority(ADMIN))
                 authorize("/payment/**", authenticated)
                 authorize("/auth/**", permitAll)
                 authorize("/public/**", permitAll)

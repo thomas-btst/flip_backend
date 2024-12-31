@@ -2,6 +2,7 @@ package com.flip.skateshop.web.rest.dto
 
 import com.flip.skateshop.domain.CommandStatus
 import java.time.Instant
+import java.time.YearMonth
 
 class CommandDto(
     val id: String,
@@ -28,10 +29,6 @@ class CommandProductDto(
     val quantity: Long,
 )
 
-class SessionDto(
-    val sessionId: String,
-)
-
 class CommandPageDto(
     val commands: List<ShortCommandDto>,
     val pages: Long,
@@ -39,4 +36,25 @@ class CommandPageDto(
 
 class CommandStatusDto(
     val status: CommandStatus,
+)
+
+class CommandsStatsDto(
+    val count: Long,
+    val total: Long,
+    val delivered: Long,
+    val canceled: Long,
+    val months: List<CommandsStatsMonthDto>,
+    val topProducts: List<CommandsTopProductDto>,
+)
+
+class CommandsTopProductDto(
+    val id: String,
+    val count: Long,
+    val product: ProductDto?,
+)
+
+class CommandsStatsMonthDto(
+    val date: YearMonth,
+    val count: Long,
+    val total: Long,
 )

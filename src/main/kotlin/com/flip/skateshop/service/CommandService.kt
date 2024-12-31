@@ -17,6 +17,7 @@ import com.flip.skateshop.mapper.CommandMapper
 import com.flip.skateshop.security.SecurityUtils
 import com.flip.skateshop.web.rest.dto.CommandDto
 import com.flip.skateshop.web.rest.dto.CommandPageDto
+import com.flip.skateshop.web.rest.dto.CommandsStatsDto
 import com.flip.skateshop.web.rest.dto.ShortCommandDto
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.toList
@@ -228,6 +229,15 @@ class CommandService(
         if (result.matchedCount < 1) {
             throw ResponseStatusException(HttpStatus.NOT_FOUND, "Command with id $commandId not found")
         }
+    }
+
+    override suspend fun getCommandsStats(): CommandsStatsDto {
+        val stats = commandRepository.getStats()
+        val statsByMonth = commandRepository.getStatsByMonth().toList()
+        val statusStats = commandRepository.getStatusStats().toList()
+        val topProducts = commandRepository.getTopProducts().toList()
+        val products = productRepository.findByIdIn(topProducts.map { it._id }).toList()
+        return commandMapper.toCommandsStatsDto(stats, statsByMonth, statusStats, topProducts, products)
     }
 }
 

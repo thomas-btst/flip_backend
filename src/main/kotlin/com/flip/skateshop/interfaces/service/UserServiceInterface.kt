@@ -10,6 +10,7 @@ import com.flip.skateshop.web.rest.dto.ShortUserDto
 import com.flip.skateshop.web.rest.dto.TokenDto
 import com.flip.skateshop.web.rest.dto.UpdateUserDto
 import com.flip.skateshop.web.rest.dto.UserPageDto
+import com.flip.skateshop.web.rest.dto.UsersStatsDto
 import org.bson.types.ObjectId
 import org.springframework.http.codec.multipart.FilePart
 
@@ -46,4 +47,6 @@ interface UserServiceInterface {
         page: Long,
         search: String,
     ): UserPageDto
+
+    suspend fun getStats(): UsersStatsDto
 }

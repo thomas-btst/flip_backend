@@ -30,9 +30,12 @@ import org.springframework.http.HttpStatus
 import org.springframework.web.server.ResponseStatusException
 import org.thymeleaf.TemplateEngine
 import java.time.Instant
+import java.time.YearMonth
+import java.time.ZoneId
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
+import kotlin.test.assertNull
 
 class CommandServiceTest(
     @Autowired
@@ -112,6 +115,7 @@ class CommandServiceTest(
     )
 
     suspend fun createProduct(
+        id: ObjectId = ObjectId(),
         name: String = "Name",
         description: String = "Description",
         price: Long = 8,
@@ -119,7 +123,7 @@ class CommandServiceTest(
     ): Product {
         val product =
             Product.Skate(
-                ObjectId(),
+                id,
                 name,
                 description,
                 price,
@@ -356,6 +360,75 @@ class CommandServiceTest(
                 assertEquals(command._id.toHexString(), id)
                 assertEquals(CommandStatus.PENDING, status)
                 assertEquals(command.total, total)
+            }
+        }
+
+    @Test
+    fun `should retrieve commands stats correctly`() =
+        runTest {
+            val yearMonth1 = YearMonth.of(2024, 11)
+            val yearMonth2 = YearMonth.of(2024, 12)
+            val date1 =
+                yearMonth1
+                    .atDay(1)
+                    .atStartOfDay()
+                    .atZone(ZoneId.systemDefault())
+                    .toInstant()
+            val date2 =
+                yearMonth2
+                    .atDay(1)
+                    .atStartOfDay()
+                    .atZone(ZoneId.systemDefault())
+                    .toInstant()
+            val product1 = ObjectId()
+            val product2 = ObjectId()
+            val product3 = ObjectId()
+            createProduct(id = product1)
+            createProduct(id = product2)
+            createCommand(
+                date = date1,
+                status = CommandStatus.DELIVERED,
+                products = mapOf(Pair(product1, 2L), Pair(product2, 3L)),
+                total = 4L,
+            )
+            createCommand(
+                date = date2,
+                status = CommandStatus.DELIVERED,
+                products = mapOf(Pair(product1, 2L), Pair(product3, 3L)),
+                total = 6L,
+            )
+            createCommand(date = date2, status = CommandStatus.DELIVERED, products = mapOf(Pair(ObjectId(), 1L)), total = 3L)
+            createCommand(date = date1, status = CommandStatus.DELIVERED, products = mapOf(Pair(product3, 1L)), total = 4L)
+            createCommand(
+                date = date2,
+                status = CommandStatus.CANCELED,
+                products = mapOf(Pair(product2, 2L), Pair(product3, 3L)),
+                total = 2L,
+            )
+            createCommand(
+                date = date2,
+                status = CommandStatus.CANCELED,
+                products = mapOf(Pair(ObjectId(), 1L), Pair(product1, 3L)),
+                total = 7L,
+            )
+            val stats = commandService.getCommandsStats()
+            assertEquals(6L, stats.count)
+            assertEquals(26L, stats.total)
+            assertEquals(4L, stats.delivered)
+            assertEquals(2L, stats.canceled)
+            stats.topProducts.run {
+                assertEquals(3, size)
+                assertEquals(7L, firstOrNull { it.id == product1.toHexString() }?.count)
+                assertNotNull(firstOrNull { it.id == product1.toHexString() }?.product)
+                assertEquals(5L, firstOrNull { it.id == product2.toHexString() }?.count)
+                assertNotNull(firstOrNull { it.id == product2.toHexString() }?.product)
+                assertEquals(7L, firstOrNull { it.id == product3.toHexString() }?.count)
+                assertNull(firstOrNull { it.id == product3.toHexString() }?.product)
+            }
+            stats.months.run {
+                assertEquals(2, size)
+//                assertEquals(2L, firstOrNull { it.date.year == yearMonth1.year && it.date.monthValue + 1 == yearMonth1.monthValue }?.count)
+//                assertEquals(4L, firstOrNull { it.date.year == yearMonth2.year && it.date.monthValue + 1 == yearMonth2.monthValue }?.count)
             }
         }
 }

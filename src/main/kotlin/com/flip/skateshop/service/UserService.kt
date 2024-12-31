@@ -22,6 +22,7 @@ import com.flip.skateshop.web.rest.dto.ShortUserDto
 import com.flip.skateshop.web.rest.dto.TokenDto
 import com.flip.skateshop.web.rest.dto.UpdateUserDto
 import com.flip.skateshop.web.rest.dto.UserPageDto
+import com.flip.skateshop.web.rest.dto.UsersStatsDto
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.reactive.awaitFirst
@@ -194,5 +195,10 @@ class UserService(
                 0L
             }
         return UserPageDto(userPage.first.map(userMapper::toShortUserDto).toList(), pages)
+    }
+
+    override suspend fun getStats(): UsersStatsDto {
+        val count = userRepository.count()
+        return UsersStatsDto(count)
     }
 }

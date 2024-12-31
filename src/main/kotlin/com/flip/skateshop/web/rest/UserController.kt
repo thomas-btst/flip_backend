@@ -6,6 +6,7 @@ import com.flip.skateshop.web.rest.dto.ShortUserDto
 import com.flip.skateshop.web.rest.dto.UpdateUserDto
 import com.flip.skateshop.web.rest.dto.UserDto
 import com.flip.skateshop.web.rest.dto.UserPageDto
+import com.flip.skateshop.web.rest.dto.UsersStatsDto
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
@@ -70,4 +71,9 @@ class UserController(
     suspend fun getUser(
         @PathVariable id: ObjectId,
     ): ShortUserDto = userService.getUser(id)
+
+    @GetMapping("/stats")
+    @Operation(summary = "Retrieve users stats")
+    @ApiResponses(ApiResponse(responseCode = "200"))
+    suspend fun getUserStats(): UsersStatsDto = userService.getStats()
 }

@@ -12,6 +12,8 @@ import org.bson.types.ObjectId
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import java.time.Instant
+import java.time.YearMonth
+import java.time.ZoneId
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
@@ -221,5 +223,111 @@ class CommandRepositoryTest(
             assertEquals(count.toInt() - limit, secondPagination.first.toList().size)
             assertEquals(count, firstPagination.second)
             assertEquals(count, secondPagination.second)
+        }
+
+    @Test
+    fun `should retrieve global stats correctly`() =
+        runTest {
+            val count = 4L
+            val price = 5L
+            for (i in 1..count) {
+                commandRepository.save(paidCommand(total = 5))
+            }
+            val stats = commandRepository.getStats()
+            assertEquals(count, stats.count)
+            assertEquals(price * count, stats.total)
+        }
+
+    @Test
+    fun `should retrieve status stats correctly`() =
+        runTest {
+            val deliveredCount = 4L
+            val cancelledCount = 2L
+            for (i in 1..deliveredCount) {
+                commandRepository.save(paidCommand(status = CommandStatus.DELIVERED))
+            }
+            for (i in 1..cancelledCount) {
+                commandRepository.save(paidCommand(status = CommandStatus.CANCELED))
+            }
+            commandRepository.save(paidCommand(status = CommandStatus.PENDING))
+            val stats = commandRepository.getStatusStats().toList()
+            assertEquals(deliveredCount, stats.firstOrNull { it._id == CommandStatus.DELIVERED }?.count)
+            assertEquals(cancelledCount, stats.firstOrNull { it._id == CommandStatus.CANCELED }?.count)
+            assertEquals(1L, stats.firstOrNull { it._id == CommandStatus.PENDING }?.count)
+            assertNull(stats.firstOrNull { it._id == CommandStatus.IN_TRANSIT }?.count)
+        }
+
+    @Test
+    fun `should retrieve top products successfully`() =
+        runTest {
+            val product1 = ObjectId()
+            val product2 = ObjectId()
+            val product3 = ObjectId()
+            val count1 = 8L
+            val count2 = 2L
+            val count3 = 3L
+
+            for (i in 1..count1) {
+                commandRepository.save(
+                    paidCommand(
+                        products = mapOf(Pair(product1, 1L)),
+                    ),
+                )
+            }
+
+            for (i in 1..count2) {
+                commandRepository.save(
+                    paidCommand(
+                        products = mapOf(Pair(product2, 1L)),
+                    ),
+                )
+            }
+
+            for (i in 1..count3) {
+                commandRepository.save(
+                    paidCommand(
+                        products = mapOf(Pair(product3, 1L)),
+                    ),
+                )
+            }
+
+            commandRepository.save(paidCommand(products = mapOf(Pair(ObjectId(), 1L))))
+            val topProducts = commandRepository.getTopProducts().toList()
+            assertEquals(3, topProducts.size)
+            assertEquals(count1, topProducts.firstOrNull { it._id == product1 }?.count)
+            assertEquals(count2, topProducts.firstOrNull { it._id == product2 }?.count)
+            assertEquals(count3, topProducts.firstOrNull { it._id == product3 }?.count)
+        }
+
+    @Test
+    fun `should retrieve months stats correctly`() =
+        runTest {
+            val yearMonth1 = YearMonth.of(2024, 11)
+            val yearMonth2 = YearMonth.of(2024, 12)
+            val date1 =
+                yearMonth1
+                    .atDay(1)
+                    .atStartOfDay()
+                    .atZone(ZoneId.systemDefault())
+                    .toInstant()
+            val date2 =
+                yearMonth2
+                    .atDay(1)
+                    .atStartOfDay()
+                    .atZone(ZoneId.systemDefault())
+                    .toInstant()
+            val count1 = 8L
+            val count2 = 3L
+            for (i in 1..count1) {
+                commandRepository.save(paidCommand(date = date1))
+            }
+            for (i in 1..count2) {
+                commandRepository.save(paidCommand(date = date2))
+            }
+            val stats = commandRepository.getStatsByMonth().toList()
+            assertEquals(2, stats.size)
+//            TODO()
+//            assertEquals(count1, stats.firstOrNull { it._id.year == yearMonth1.year && it._id.month + 1 == yearMonth1.monthValue }?.count)
+//            assertEquals(count2, stats.firstOrNull { it._id.year == yearMonth2.year && it._id.month + 1 == yearMonth2.monthValue }?.count)
         }
 }

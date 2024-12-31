@@ -340,4 +340,73 @@ class UserControllerTest(
                 .expectStatus()
                 .isForbidden
         }
+
+    @Test
+    fun `should retrieve users stats successfully`() =
+        runTest {
+            val email = "test@test.com"
+            val password = "password"
+            userRepository.save(
+                User(
+                    ObjectId(),
+                    "Thomas",
+                    "BATISTA",
+                    email,
+                    "",
+                    null,
+                    "{noop}$password",
+                    setOf(RoleEnum.ADMIN),
+                    null,
+                    null,
+                    null,
+                    true,
+                    emptyMap(),
+                    emptyMap(),
+                ),
+            )
+            val token = userService.login(LoginDto(email, password))
+            webTestClient
+                .get()
+                .uri("/users/stats")
+                .header("Authorization", "Bearer ${token.accessToken}")
+                .exchange()
+                .expectStatus()
+                .isOk
+                .expectBody()
+                .jsonPath("$.count")
+                .isEqualTo(1)
+        }
+
+    @Test
+    fun `should not retrieve users stats if user is not admin`() =
+        runTest {
+            val email = "test@test.com"
+            val password = "password"
+            userRepository.save(
+                User(
+                    ObjectId(),
+                    "Thomas",
+                    "BATISTA",
+                    email,
+                    "",
+                    null,
+                    "{noop}$password",
+                    emptySet(),
+                    null,
+                    null,
+                    null,
+                    true,
+                    emptyMap(),
+                    emptyMap(),
+                ),
+            )
+            val token = userService.login(LoginDto(email, password))
+            webTestClient
+                .get()
+                .uri("/users/stats")
+                .header("Authorization", "Bearer ${token.accessToken}")
+                .exchange()
+                .expectStatus()
+                .isForbidden()
+        }
 }

@@ -111,4 +111,9 @@ class CommandController(
         @PathVariable commandId: ObjectId,
         @RequestBody commandStatus: CommandStatusDto,
     ) = commandService.updateCommandStatus(commandId, commandStatus.status)
+
+    @GetMapping("/stats")
+    @Operation(summary = "Get commands stats")
+    @ApiResponses(ApiResponse(responseCode = "200"))
+    suspend fun getCommandsStats() = commandService.getCommandsStats()
 }

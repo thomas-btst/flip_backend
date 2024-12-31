@@ -855,4 +855,70 @@ class CommandControllerTest(
                 .expectStatus()
                 .isForbidden()
         }
+
+    @Test
+    fun `should retrieve commands stats successfully`() =
+        runTest {
+            val email = "test@test.com"
+            val password = "password"
+            userRepository.save(
+                User(
+                    ObjectId(),
+                    "Thomas",
+                    "BATISTA",
+                    email,
+                    "",
+                    null,
+                    "{noop}$password",
+                    setOf(RoleEnum.ADMIN),
+                    null,
+                    null,
+                    null,
+                    true,
+                    emptyMap(),
+                    emptyMap(),
+                ),
+            )
+            val token = userService.login(LoginDto(email, password))
+            webTestClient
+                .get()
+                .uri("/commands/stats")
+                .header("Authorization", "Bearer ${token.accessToken}")
+                .exchange()
+                .expectStatus()
+                .isOk
+        }
+
+    @Test
+    fun `should not retrieve commands stats if user is not admin`() =
+        runTest {
+            val email = "test@test.com"
+            val password = "password"
+            userRepository.save(
+                User(
+                    ObjectId(),
+                    "Thomas",
+                    "BATISTA",
+                    email,
+                    "",
+                    null,
+                    "{noop}$password",
+                    emptySet(),
+                    null,
+                    null,
+                    null,
+                    true,
+                    emptyMap(),
+                    emptyMap(),
+                ),
+            )
+            val token = userService.login(LoginDto(email, password))
+            webTestClient
+                .get()
+                .uri("/commands/stats")
+                .header("Authorization", "Bearer ${token.accessToken}")
+                .exchange()
+                .expectStatus()
+                .isForbidden()
+        }
 }

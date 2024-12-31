@@ -524,4 +524,15 @@ class UserServiceTest
                 assertEquals(2, firstPagination.pages)
                 assertEquals(2, secondPagination.pages)
             }
+
+        @Test
+        fun `should retrieve users stats correctly`() =
+            runTest {
+                val count = 16L
+                for (i in 1..count) {
+                    createUser()
+                }
+                val stats = userService.getStats()
+                assertEquals(count, stats.count)
+            }
     }

@@ -3,6 +3,7 @@ package com.flip.skateshop.interfaces.service
 import com.flip.skateshop.domain.CommandStatus
 import com.flip.skateshop.web.rest.dto.CommandDto
 import com.flip.skateshop.web.rest.dto.CommandPageDto
+import com.flip.skateshop.web.rest.dto.CommandsStatsDto
 import com.flip.skateshop.web.rest.dto.ShortCommandDto
 import org.bson.types.ObjectId
 
@@ -32,4 +33,6 @@ interface CommandServiceInterface {
         commandId: ObjectId,
         commandStatus: CommandStatus,
     )
+
+    suspend fun getCommandsStats(): CommandsStatsDto
 }
