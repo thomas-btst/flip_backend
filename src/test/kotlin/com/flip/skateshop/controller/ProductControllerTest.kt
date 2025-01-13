@@ -91,7 +91,7 @@ class ProductControllerTest(
             productRepository.save(product)
             webTestClient
                 .get()
-                .uri("/public/products/limit/80")
+                .uri("/public/products?limit=80")
                 .exchange()
                 .expectStatus()
                 .isOk
@@ -105,6 +105,27 @@ class ProductControllerTest(
     @Test
     fun `should get products by page`() =
         runTest {
+            val email = "test@test.com"
+            val password = "password"
+            userRepository.save(
+                User(
+                    ObjectId(),
+                    "Thomas",
+                    "BATISTA",
+                    email,
+                    "",
+                    null,
+                    "{noop}$password",
+                    setOf(RoleEnum.ADMIN),
+                    null,
+                    null,
+                    null,
+                    true,
+                    emptyMap(),
+                    emptyMap(),
+                ),
+            )
+            val token = userService.login(LoginDto(email, password))
             val product =
                 Product.Skate(
                     ObjectId(),
@@ -116,7 +137,8 @@ class ProductControllerTest(
             productRepository.save(product)
             webTestClient
                 .get()
-                .uri("/public/products/limit/80/page/0")
+                .uri("/products?limit=80&page=0")
+                .header("Authorization", "Bearer ${token.accessToken}")
                 .exchange()
                 .expectStatus()
                 .isOk

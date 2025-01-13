@@ -47,8 +47,8 @@ class CommandController(
         @PathVariable sessionId: String,
     ) = commandService.finalizeCommandForCurrentUser(sessionId)
 
-    @GetMapping
-    @Operation(summary = "List commands current for user")
+    @GetMapping("/current_user")
+    @Operation(summary = "List commands for current user")
     @ApiResponses(ApiResponse(responseCode = "200"))
     suspend fun listCommandsForCurrentUser(): List<ShortCommandDto> = commandService.listCommandsForCurrentUser()
 
@@ -80,12 +80,12 @@ class CommandController(
         @PathVariable commandId: ObjectId,
     ) = commandService.cancelCommandForCurrentUser(commandId)
 
-    @GetMapping("/limit/{limit}/page/{page}")
+    @GetMapping
     @Operation(summary = "Retrieve a pagination of commands by id and status")
     @ApiResponses(ApiResponse(responseCode = "200"))
     suspend fun getCommandsByPage(
-        @PathVariable limit: Int,
-        @PathVariable page: Long,
+        @RequestParam limit: Int,
+        @RequestParam page: Long,
         @RequestParam search: String = "",
         @RequestParam status: CommandStatus?,
     ): CommandPageDto = commandService.getCommandsByPage(limit, page, search, status)

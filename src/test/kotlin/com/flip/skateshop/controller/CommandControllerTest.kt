@@ -180,7 +180,7 @@ class CommandControllerTest(
             val token = userService.login(LoginDto(email, password))
             webTestClient
                 .get()
-                .uri("/commands")
+                .uri("/commands/current_user")
                 .header("Authorization", "Bearer ${token.accessToken}")
                 .exchange()
                 .expectStatus()

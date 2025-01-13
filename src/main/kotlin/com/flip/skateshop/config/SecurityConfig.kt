@@ -75,10 +75,11 @@ class SecurityConfig(
                     ),
                     permitAll,
                 )
+                authorize("/users/current", authenticated)
                 authorize(pathMatchers(HttpMethod.GET, "/users/{id}"), hasAuthority(ADMIN))
-                authorize(pathMatchers(HttpMethod.GET, "/users/limit/{limit}/page/{page}"), hasAuthority(ADMIN))
+                authorize(pathMatchers(HttpMethod.GET, "/users"), hasAuthority(ADMIN))
                 authorize(pathMatchers(HttpMethod.GET, "/commands/users/{userId}"), hasAuthority(ADMIN))
-                authorize(pathMatchers(HttpMethod.GET, "/commands/limit/{limit}/page/{page}"), hasAuthority(ADMIN))
+                authorize(pathMatchers(HttpMethod.GET, "/commands"), hasAuthority(ADMIN))
                 authorize(pathMatchers(HttpMethod.GET, "/commands/admin/{commandId}"), hasAuthority(ADMIN))
                 authorize(pathMatchers(HttpMethod.PATCH, "/commands/{commandId}/status"), hasAuthority(ADMIN))
                 authorize(pathMatchers(HttpMethod.GET, "/commands/stats"), hasAuthority(ADMIN))

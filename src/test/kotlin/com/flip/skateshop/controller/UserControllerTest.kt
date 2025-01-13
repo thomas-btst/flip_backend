@@ -56,7 +56,7 @@ class UserControllerTest(
             val token = userService.login(LoginDto(email, password))
             webTestClient
                 .get()
-                .uri("/users")
+                .uri("/users/current")
                 .header("Authorization", "Bearer ${token.accessToken}")
                 .exchange()
                 .expectStatus()
@@ -184,7 +184,7 @@ class UserControllerTest(
             val token = userService.login(LoginDto(email, password))
             webTestClient
                 .get()
-                .uri("/users/limit/10/page/0")
+                .uri("/users?limit=10&page=0")
                 .header("Authorization", "Bearer ${token.accessToken}")
                 .exchange()
                 .expectStatus()
@@ -222,7 +222,7 @@ class UserControllerTest(
             val token = userService.login(LoginDto(email, password))
             webTestClient
                 .get()
-                .uri("/users/limit/10/page/0")
+                .uri("/users?limit=10&page=0")
                 .header("Authorization", "Bearer ${token.accessToken}")
                 .exchange()
                 .expectStatus()

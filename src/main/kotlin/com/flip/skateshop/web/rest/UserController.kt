@@ -32,7 +32,7 @@ class UserController(
     private val userService: UserServiceInterface,
     private val userMapper: UserMapper,
 ) {
-    @GetMapping
+    @GetMapping("/current")
     @Operation(summary = "Retrieve user information")
     @ApiResponses(ApiResponse(responseCode = "200"))
     suspend fun getCurrentUser(): UserDto = userMapper.toUserDto(userService.getCurrentUser())
@@ -53,12 +53,12 @@ class UserController(
         @RequestPart("logo") logo: FilePart,
     ) = userService.updateLogoForCurrentUser(logo)
 
-    @GetMapping("/limit/{limit}/page/{page}")
+    @GetMapping
     @Operation(summary = "Retrieve a pagination of users by email")
     @ApiResponses(ApiResponse(responseCode = "200"))
     suspend fun getUsersByPage(
-        @PathVariable limit: Int,
-        @PathVariable page: Long,
+        @RequestParam limit: Int,
+        @RequestParam page: Long,
         @RequestParam search: String = "",
     ): UserPageDto = userService.getUsersByPage(limit, page, search)
 

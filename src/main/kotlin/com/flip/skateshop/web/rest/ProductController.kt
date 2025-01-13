@@ -1,7 +1,9 @@
 package com.flip.skateshop.web.rest
 
+import com.flip.skateshop.domain.ProductType
 import com.flip.skateshop.interfaces.service.ProductServiceInterface
 import com.flip.skateshop.web.rest.dto.CreateProductDto
+import com.flip.skateshop.web.rest.dto.ProductPageDto
 import com.flip.skateshop.web.rest.dto.UpdateProductDto
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.responses.ApiResponse
@@ -11,12 +13,14 @@ import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.http.codec.multipart.FilePart
 import org.springframework.web.bind.annotation.DeleteMapping
+import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PatchMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RequestPart
 import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
@@ -71,4 +75,14 @@ class ProductController(
     ) {
         productService.deleteProduct(productId)
     }
+
+    @GetMapping
+    @Operation(summary = "Retrieve a pagination of products by name and type")
+    @ApiResponses(ApiResponse(responseCode = "200"))
+    suspend fun getProductsByPage(
+        @RequestParam limit: Int,
+        @RequestParam page: Long,
+        @RequestParam search: String = "",
+        @RequestParam type: ProductType?,
+    ): ProductPageDto = productService.getProductsByPage(limit, page, search, type)
 }
