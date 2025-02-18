@@ -5,6 +5,7 @@ import com.flip.skateshop.config.Seeder
 import com.flip.skateshop.config.SeederConfig
 import com.flip.skateshop.interfaces.repository.ProductRepositoryInterface
 import com.flip.skateshop.interfaces.repository.UserRepositoryInterface
+import com.flip.skateshop.seeder.AdminSeeder
 import com.flip.skateshop.seeder.ProductSeeder
 import com.flip.skateshop.seeder.UserSeeder
 import com.flip.skateshop.util.ServicesCleaner
@@ -23,6 +24,7 @@ class SeederTest
     constructor(
         private val userSeeder: UserSeeder,
         private val productSeeder: ProductSeeder,
+        private val adminSeeder: AdminSeeder,
         private val userRepository: UserRepositoryInterface,
         private val productRepository: ProductRepositoryInterface,
     ) : ServicesCleaner() {
@@ -73,8 +75,7 @@ class SeederTest
         fun `should seed users successfully`() =
             runTest {
                 userSeeder.seed()
-                assertNotNull(userRepository.findOneByEmail(UserSeeder.ADMIN_EMAIL))
-                assertEquals(userRepository.count(), 6)
+                assertEquals(userRepository.count(), 5)
             }
 
         @Test
@@ -82,5 +83,13 @@ class SeederTest
             runTest {
                 productSeeder.seed()
                 assertEquals(productRepository.count(), 200)
+            }
+
+        @Test
+        fun `should seed admin successfully`() =
+            runTest {
+                adminSeeder.seed()
+                assertNotNull(userRepository.findOneByEmail(UserSeeder.ADMIN_EMAIL))
+                assertEquals(userRepository.count(), 1)
             }
     }

@@ -88,7 +88,7 @@ You can also seed specific collections by specifying their names in a comma-sepa
 ``` bash
 ./mvnw spring-boot:run -Dspring-boot.run.arguments="--seed=users,products"
 ```
-Supported collections names: users, products, etc.
+Supported collections names: users, products and admin.
 #### Open API : Swagger UI
 Access the Swagger API to http://localhost:8080/swagger-ui.html
 

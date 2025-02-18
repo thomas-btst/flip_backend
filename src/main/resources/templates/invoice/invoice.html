@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <title th:text="'Facture ' + ${invoiceId}"></title>
+    <title th:text="'Facture de Test ' + ${invoiceId}"></title>
     <style>
         .invoice-box {
             color: black;
@@ -108,7 +108,8 @@
             <td></td>
             <td></td>
             <td>
-                <span th:text="' Facture ' + ${invoiceId}"></span><br>
+                <span th:text="'Facture de test'"></span><br>
+                <span th:text="${invoiceId}"></span></br>
                 <span th:text="'Date : ' + ${date}"></span><br>
             </td>
         </tr>
@@ -162,6 +163,7 @@
             <td th:text="'Total : ' + ${total}"></td>
         </tr>
     </table>
+    <div style="text-align: center; font-style: italic;">Facture de test - Aucune transaction réelle</div>
 </div>
 </body>
 </html>
