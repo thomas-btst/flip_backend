@@ -1,6 +1,7 @@
 package com.flip.skateshop.service
 
 import com.flip.skateshop.domain.ProductType
+import com.flip.skateshop.interfaces.repository.FeedbackRepositoryInterface
 import com.flip.skateshop.interfaces.repository.ProductRepositoryInterface
 import com.flip.skateshop.interfaces.service.FileServiceInterface
 import com.flip.skateshop.interfaces.service.ProductServiceInterface
@@ -10,7 +11,6 @@ import com.flip.skateshop.web.rest.dto.ProductDto
 import com.flip.skateshop.web.rest.dto.ProductPageDto
 import com.flip.skateshop.web.rest.dto.ProductPaginationDto
 import com.flip.skateshop.web.rest.dto.UpdateProductDto
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.toList
 import org.bson.types.ObjectId
@@ -24,12 +24,14 @@ class ProductService(
     private val productRepository: ProductRepositoryInterface,
     private val productMapper: ProductMapper,
     private val fileService: FileServiceInterface,
+    private val feedbackRepository: FeedbackRepositoryInterface,
 ) : ProductServiceInterface {
     override suspend fun getProduct(productId: ObjectId): ProductDto {
         val product =
             productRepository.findById(productId)
                 ?: throw ResponseStatusException(HttpStatus.NOT_FOUND, "Product with id $productId does not exist")
-        return productMapper.toProductDto(product)
+        val rate = feedbackRepository.getRateAverageForProduct(productId)
+        return productMapper.toProductDto(product, rate)
     }
 
     override suspend fun getProductsByPage(

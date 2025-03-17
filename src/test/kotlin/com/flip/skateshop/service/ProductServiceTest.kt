@@ -2,6 +2,7 @@ package com.flip.skateshop.service
 
 import com.flip.skateshop.domain.Product
 import com.flip.skateshop.domain.ProductType
+import com.flip.skateshop.interfaces.repository.FeedbackRepositoryInterface
 import com.flip.skateshop.interfaces.repository.ProductRepositoryInterface
 import com.flip.skateshop.interfaces.service.FileServiceInterface
 import com.flip.skateshop.mapper.ProductMapper
@@ -28,9 +29,10 @@ class ProductServiceTest
     constructor(
         private val productRepository: ProductRepositoryInterface,
         private val productMapper: ProductMapper,
+        private val feedbackRepository: FeedbackRepositoryInterface,
     ) : ServicesCleaner() {
         private val fileService = mockk<FileServiceInterface>(relaxed = true)
-        private val productService = ProductService(productRepository, productMapper, fileService)
+        private val productService = ProductService(productRepository, productMapper, fileService, feedbackRepository)
 
         suspend fun createProduct(
             name: String = "Name",
@@ -313,6 +315,7 @@ class ProductServiceTest
                     assertEquals(description, productDto.description)
                     assertEquals(price, productDto.price)
                     assertEquals(productMapper.toProductType(product), productDto.type)
+                    assertEquals(null, productDto.rate)
                 }
             }
     }

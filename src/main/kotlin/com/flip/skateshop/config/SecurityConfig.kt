@@ -84,6 +84,8 @@ class SecurityConfig(
                 authorize(pathMatchers(HttpMethod.PATCH, "/commands/{commandId}/status"), hasAuthority(ADMIN))
                 authorize(pathMatchers(HttpMethod.GET, "/commands/stats"), hasAuthority(ADMIN))
                 authorize("/payment/**", authenticated)
+                authorize(pathMatchers(HttpMethod.GET, "/feedbacks/**"), permitAll)
+                authorize("/feedbacks/**", authenticated)
                 authorize("/auth/**", permitAll)
                 authorize("/public/**", permitAll)
                 authorize("/users/**", authenticated)

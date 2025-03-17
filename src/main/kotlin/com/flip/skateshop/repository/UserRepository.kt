@@ -248,4 +248,6 @@ class UserRepository(
         val users = mongoTemplate.find(query.skip(limit * page).limit(limit), User::class.java).asFlow()
         return Pair(users, count)
     }
+
+    override suspend fun findByIdIn(userIds: List<ObjectId>) = repository.findAllById(userIds)
 }

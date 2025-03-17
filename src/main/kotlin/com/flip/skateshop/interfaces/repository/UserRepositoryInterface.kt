@@ -81,4 +81,6 @@ interface UserRepositoryInterface {
         page: Long,
         search: String,
     ): Pair<Flow<User>, Long>
+
+    suspend fun findByIdIn(userIds: List<ObjectId>): Flow<User>
 }

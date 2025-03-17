@@ -40,16 +40,19 @@ class ProductMapper(
             }
         }
 
-    fun toProductDto(product: Product): ProductDto =
+    fun toProductDto(
+        product: Product,
+        rate: Double? = null,
+    ): ProductDto =
         product.run {
             val picturePath = fileMapper.toPublicPath(product.picture)
             when (product) {
-                is Skate -> ProductDto.Skate(_id.toHexString(), name, description, price, picturePath)
-                is Deck -> ProductDto.Deck(_id.toHexString(), name, description, price, picturePath)
-                is Wheel -> ProductDto.Wheel(_id.toHexString(), name, description, price, picturePath)
-                is Bearing -> ProductDto.Bearing(_id.toHexString(), name, description, price, picturePath)
-                is GridTape -> ProductDto.GridTape(_id.toHexString(), name, description, price, picturePath)
-                is Truck -> ProductDto.Truck(_id.toHexString(), name, description, price, picturePath)
+                is Skate -> ProductDto.Skate(_id.toHexString(), name, description, price, picturePath, rate)
+                is Deck -> ProductDto.Deck(_id.toHexString(), name, description, price, picturePath, rate)
+                is Wheel -> ProductDto.Wheel(_id.toHexString(), name, description, price, picturePath, rate)
+                is Bearing -> ProductDto.Bearing(_id.toHexString(), name, description, price, picturePath, rate)
+                is GridTape -> ProductDto.GridTape(_id.toHexString(), name, description, price, picturePath, rate)
+                is Truck -> ProductDto.Truck(_id.toHexString(), name, description, price, picturePath, rate)
             }
         }
 }

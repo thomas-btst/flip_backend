@@ -68,6 +68,7 @@ sealed class ProductDto(
     val price: Long,
     @Suppress("unused")
     val picture: String,
+    val rate: Double?,
 ) {
     @Suppress("unused")
     val type: ProductType
@@ -87,7 +88,8 @@ sealed class ProductDto(
         description: String,
         price: Long,
         picture: String,
-    ) : ProductDto(id, name, description, price, picture)
+        rate: Double?,
+    ) : ProductDto(id, name, description, price, picture, rate)
 
     class Deck(
         id: String,
@@ -95,7 +97,8 @@ sealed class ProductDto(
         description: String,
         price: Long,
         picture: String,
-    ) : ProductDto(id, name, description, price, picture)
+        rate: Double?,
+    ) : ProductDto(id, name, description, price, picture, rate)
 
     class Wheel(
         id: String,
@@ -103,7 +106,8 @@ sealed class ProductDto(
         description: String,
         price: Long,
         picture: String,
-    ) : ProductDto(id, name, description, price, picture)
+        rate: Double?,
+    ) : ProductDto(id, name, description, price, picture, rate)
 
     class Bearing(
         id: String,
@@ -111,7 +115,8 @@ sealed class ProductDto(
         description: String,
         price: Long,
         picture: String,
-    ) : ProductDto(id, name, description, price, picture)
+        rate: Double?,
+    ) : ProductDto(id, name, description, price, picture, rate)
 
     class GridTape(
         id: String,
@@ -119,7 +124,8 @@ sealed class ProductDto(
         description: String,
         price: Long,
         picture: String,
-    ) : ProductDto(id, name, description, price, picture)
+        rate: Double?,
+    ) : ProductDto(id, name, description, price, picture, rate)
 
     class Truck(
         id: String,
@@ -127,7 +133,8 @@ sealed class ProductDto(
         description: String,
         price: Long,
         picture: String,
-    ) : ProductDto(id, name, description, price, picture)
+        rate: Double?,
+    ) : ProductDto(id, name, description, price, picture, rate)
 }
 
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type", visible = true)

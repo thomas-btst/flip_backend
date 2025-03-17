@@ -49,6 +49,12 @@ class ShortUserDto(
     val phone: String?,
 )
 
+class FeedbackUserDto(
+    val firstName: String,
+    val lastName: String,
+    val logo: String?,
+)
+
 class UsersStatsDto(
     val count: Long,
 )
