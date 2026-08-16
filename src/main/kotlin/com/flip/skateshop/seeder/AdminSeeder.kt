@@ -29,7 +29,7 @@ class AdminSeeder(
                     UserSeeder.ADMIN_EMAIL,
                     null,
                     null,
-                    "{noop}AdminPassword123!",
+                    "{noop}admin",
                     setOf(RoleEnum.ADMIN),
                     null,
                     null,
